@@ -10,6 +10,7 @@ from app.models.schemas import Session, TurnPlan
 class FakeLLM:
     def __init__(self, plans: list[TurnPlan]):
         self._plans = list(plans)
+        self._last: Optional[TurnPlan] = None
         self.calls: list[dict] = []
 
     async def generate_turn(
@@ -18,9 +19,10 @@ class FakeLLM:
         self.calls.append(
             {"utterance": utterance, "repair_hint": repair_hint, "session_id": session.id}
         )
+        # repair 时重复上一次的输出(模拟 LLM 重试仍给同样的、可能仍非法的结果)
+        if repair_hint is not None and self._last is not None:
+            return self._last
         if not self._plans:
             raise AssertionError("FakeLLM 预置的 TurnPlan 已用尽")
-        # repair 时返回同一个(模拟 LLM 重试仍给同样输出),否则弹出下一个
-        if repair_hint is not None and self._plans:
-            return self._plans[0]
-        return self._plans.pop(0)
+        self._last = self._plans.pop(0)
+        return self._last
