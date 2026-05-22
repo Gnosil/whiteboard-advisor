@@ -3,10 +3,13 @@ import { useSocket, type InboundMessage } from "./hooks/useSocket";
 import { useRecorder } from "./hooks/useRecorder";
 import { useTtsPlayer } from "./hooks/useTtsPlayer";
 import Whiteboard from "./components/Whiteboard";
+import Onboarding from "./components/Onboarding";
+import { t } from "./lib/i18n";
 import type { AiMessage, Lang, TemplateMeta, ZoneMeta, ZoneStateEntry } from "./lib/types";
 
 export default function App() {
   const [lang, setLang] = useState<Lang>("zh");
+  const [onboarded, setOnboarded] = useState(() => !!localStorage.getItem("wb_onboarded"));
   const [zoneMeta, setZoneMeta] = useState<ZoneMeta[]>([]);
   const [templates, setTemplates] = useState<TemplateMeta[]>([]);
   const [templateId, setTemplateId] = useState("family-protection");
@@ -152,6 +155,20 @@ export default function App() {
     }
   };
 
+  if (!onboarded) {
+    return (
+      <Onboarding
+        onDone={({ lang: l, persona }) => {
+          setLang(l);
+          send({ type: "set_language", language: l });
+          send({ type: "set_persona", persona });
+          localStorage.setItem("wb_onboarded", "1");
+          setOnboarded(true);
+        }}
+      />
+    );
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {showLeadForm && (
@@ -244,9 +261,15 @@ export default function App() {
           <button
             onClick={() => {
               const sid = sessionIdRef.current;
-              if (sid) window.open(`/api/session/${sid}/pdf`, "_blank");
+              if (!sid) return;
+              const premium = !!localStorage.getItem("wb_premium");
+              if (!premium) {
+                if (confirm(`🔒 ${t("premiumOnly", lang)}`)) localStorage.setItem("wb_premium", "1");
+                else return;
+              }
+              window.open(`/api/session/${sid}/pdf`, "_blank");
             }}
-            title="导出当前规划为 PDF"
+            title="导出当前规划为 PDF (Premium)"
             style={{
               padding: "4px 10px",
               borderRadius: 6,
@@ -256,7 +279,7 @@ export default function App() {
               fontSize: 12,
             }}
           >
-            导出PDF
+            🔒{t("exportPdf", lang)}
           </button>
           <button
             onClick={async () => {
@@ -283,7 +306,7 @@ export default function App() {
               fontSize: 12,
             }}
           >
-            分享
+            {t("share", lang)}
           </button>
           <button
             onClick={() => {
@@ -299,7 +322,7 @@ export default function App() {
               fontSize: 12,
             }}
           >
-            新建
+            {t("newSession", lang)}
           </button>
           <button
             onClick={() => setLang((l) => (l === "zh" ? "en" : "zh"))}
@@ -315,7 +338,7 @@ export default function App() {
             {lang === "zh" ? "中文" : "EN"}
           </button>
           <span style={{ fontSize: 13, color: status === "open" ? "#3ddc84" : "#ff7a7a" }}>
-            {status === "open" ? "● 已连接" : "○ 连接中"}
+            {status === "open" ? t("connected", lang) : t("connecting", lang)}
           </span>
         </div>
       </header>
@@ -333,7 +356,7 @@ export default function App() {
             gap: 16,
           }}
         >
-          <span style={{ fontSize: 14 }}>✅ 规划草图已完成。要不要让一位持牌经纪人帮你深入做一版?</span>
+          <span style={{ fontSize: 14 }}>✅ {t("planDone", lang)}</span>
           <button
             onClick={() => setShowLeadForm(true)}
             style={{
@@ -345,7 +368,7 @@ export default function App() {
               fontSize: 13,
             }}
           >
-            找经纪人深入
+            {t("findBroker", lang)}
           </button>
         </div>
       )}
@@ -406,7 +429,7 @@ export default function App() {
             {thinking && <div style={{ color: "var(--muted)", fontSize: 13 }}>{thinkingHint || "AI 正在思考…"}</div>}
             {idlePrompt && !thinking && (
               <div style={{ alignSelf: "flex-start", background: "var(--panel)", padding: "8px 12px", borderRadius: 12, fontSize: 14 }}>
-                还在吗?需要换个话题,或者继续刚才的规划?
+                {t("idle", lang)}
               </div>
             )}
           </div>
@@ -433,7 +456,7 @@ export default function App() {
               ref={inputRef}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder={lang === "zh" ? "说点什么…" : "Say something…"}
+              placeholder={t("inputPlaceholder", lang)}
               style={{
                 flex: 1,
                 padding: "10px 14px",
@@ -456,7 +479,7 @@ export default function App() {
                 fontSize: 14,
               }}
             >
-              发送
+              {t("send", lang)}
             </button>
           </form>
         </aside>

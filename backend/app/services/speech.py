@@ -27,6 +27,17 @@ ASR_PID = {Language.zh: 1537, Language.en: 1737}
 # 百度 TTS 发音人:0 女声 / 1 男声 / 3 度逍遥 / 4 度丫丫
 TTS_VOICE_MALE = 1
 
+# persona → 百度 per
+PERSONA_VOICE = {
+    "gentleman": 1,   # 资深绅士(男声)
+    "auntie": 0,      # 亲切阿姨(女声)
+    "young_pro": 3,   # 专业青年(度逍遥)
+}
+
+
+def voice_for_persona(persona: str) -> int:
+    return PERSONA_VOICE.get(persona, TTS_VOICE_MALE)
+
 
 async def _get_token() -> Optional[str]:
     if not settings.has_speech:

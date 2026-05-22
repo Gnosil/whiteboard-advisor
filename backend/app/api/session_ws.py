@@ -23,7 +23,9 @@ async def _run_turn(ws: WebSocket, session, text: str) -> None:
         await ws.send_json(ev)
         narration = ev.get("narration") if isinstance(ev, dict) else None
         if ev.get("type") in ("ai_message", "finalize", "free_chat") and narration:
-            audio = await speech.synthesize(narration, session.language)
+            audio = await speech.synthesize(
+                narration, session.language, speech.voice_for_persona(session.voice_persona)
+            )
             if audio:
                 await ws.send_json({"type": "tts_audio", "format": "mp3", "audio": audio})
     session_store.save(session)
@@ -78,6 +80,10 @@ async def session_ws(ws: WebSocket) -> None:
 
             if mtype == "set_language":
                 session.language = Language(msg.get("language", "zh"))
+                continue
+
+            if mtype == "set_persona":
+                session.voice_persona = msg.get("persona", "gentleman")
                 continue
 
             if mtype == "set_template":

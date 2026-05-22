@@ -72,6 +72,7 @@ class Session(BaseModel):
     zones: dict[str, Zone] = Field(default_factory=dict)
     dialogue_history: list[DialogueEntry] = Field(default_factory=list)
     current_zone_focus: Optional[str] = None
+    voice_persona: str = "gentleman"  # gentleman / auntie / young_pro
     llm_cost: float = 0.0  # 累计 LLM 估算成本 (USD)
     share_token: Optional[str] = None
     share_expires_at: Optional[datetime] = None
