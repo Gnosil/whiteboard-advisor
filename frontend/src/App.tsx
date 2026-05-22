@@ -199,6 +199,33 @@ export default function App() {
             导出PDF
           </button>
           <button
+            onClick={async () => {
+              const sid = sessionIdRef.current;
+              if (!sid) return;
+              const r = await fetch(`/api/session/${sid}/share`, { method: "POST" });
+              if (!r.ok) return;
+              const { token } = await r.json();
+              const url = `${location.origin}/?share=${token}`;
+              try {
+                await navigator.clipboard.writeText(url);
+                alert(`只读分享链接已复制(7天有效):\n${url}`);
+              } catch {
+                prompt("只读分享链接(7天有效):", url);
+              }
+            }}
+            title="生成只读分享链接(7天有效)"
+            style={{
+              padding: "4px 10px",
+              borderRadius: 6,
+              border: "1px solid #2a323d",
+              background: "transparent",
+              color: "var(--muted)",
+              fontSize: 12,
+            }}
+          >
+            分享
+          </button>
+          <button
             onClick={() => {
               localStorage.removeItem("wb_session");
               location.reload();

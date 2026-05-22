@@ -7,6 +7,8 @@ V0.1 用文件持久化(单机即可),支持跨进程 resume。M_future 可换 P
 from __future__ import annotations
 
 import logging
+import secrets
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -15,8 +17,13 @@ from app.services import zone_engine
 
 logger = logging.getLogger("whiteboard-advisor.store")
 
-_DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "sessions"
+_BASE = Path(__file__).resolve().parents[2] / "data"
+_DATA_DIR = _BASE / "sessions"
+_SHARE_DIR = _BASE / "shares"
 _DATA_DIR.mkdir(parents=True, exist_ok=True)
+_SHARE_DIR.mkdir(parents=True, exist_ok=True)
+
+SHARE_TTL_DAYS = 7
 
 _CACHE: dict[str, Session] = {}
 
@@ -70,6 +77,29 @@ def get_or_create(
         if existing:
             return existing
     return create(language, template_id)
+
+
+def ensure_share(session: Session) -> str:
+    """生成(或刷新)只读分享 token,默认 7 天过期。"""
+    token = secrets.token_urlsafe(12)
+    session.share_token = token
+    session.share_expires_at = datetime.now(timezone.utc) + timedelta(days=SHARE_TTL_DAYS)
+    (_SHARE_DIR / f"{token}.txt").write_text(session.id, encoding="utf-8")
+    save(session)
+    return token
+
+
+def resolve_share(token: str) -> Optional[Session]:
+    """返回 token 对应且未过期的 session;过期或无效返回 None。"""
+    ptr = _SHARE_DIR / f"{token}.txt"
+    if not ptr.exists():
+        return None
+    session = _load(ptr.read_text(encoding="utf-8").strip())
+    if not session or session.share_token != token:
+        return None
+    if session.share_expires_at and session.share_expires_at < datetime.now(timezone.utc):
+        return None
+    return session
 
 
 def set_template(session: Session, template_id: str) -> Session:

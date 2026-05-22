@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.session_ws import router as session_router
 from app.config import settings
-from app.services import pdf_export, session_store
+from app.services import pdf_export, session_store, zone_engine
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("whiteboard-advisor")
@@ -43,3 +43,34 @@ async def session_pdf(session_id: str) -> Response:
         media_type="application/pdf",
         headers={"Content-Disposition": f'inline; filename="plan-{session_id[:8]}.pdf"'},
     )
+
+
+@app.post("/api/session/{session_id}/share")
+async def create_share(session_id: str) -> dict:
+    session = session_store.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="session not found")
+    token = session_store.ensure_share(session)
+    return {"token": token, "expiresAt": session.share_expires_at.isoformat()}
+
+
+@app.get("/api/share/{token}")
+async def read_share(token: str) -> dict:
+    session = session_store.resolve_share(token)
+    if not session:
+        raise HTTPException(status_code=410, detail="share link invalid or expired")
+    # 脱敏:只返回白板与解说,不含任何联系方式
+    return {
+        "templateId": session.template_id,
+        "language": session.language.value,
+        "zones": zone_engine.zone_meta(session),
+        "zoneData": {
+            zid: {"data": z.data, "version": z.version}
+            for zid, z in session.zones.items()
+            if z.data
+        },
+        "dialogue": [
+            {"role": e.role, "content": e.content}
+            for e in session.dialogue_history
+        ],
+    }

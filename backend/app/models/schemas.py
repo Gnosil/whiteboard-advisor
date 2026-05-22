@@ -72,6 +72,8 @@ class Session(BaseModel):
     zones: dict[str, Zone] = Field(default_factory=dict)
     dialogue_history: list[DialogueEntry] = Field(default_factory=list)
     current_zone_focus: Optional[str] = None
+    share_token: Optional[str] = None
+    share_expires_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=_now)
     last_active_at: datetime = Field(default_factory=_now)
 
