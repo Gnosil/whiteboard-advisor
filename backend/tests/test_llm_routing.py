@@ -25,6 +25,7 @@ def capture_model(monkeypatch):
     monkeypatch.setattr(settings, "qianfan_model_fast", "fast-model")
     monkeypatch.setattr(settings, "qianfan_model_deep", "deep-model")
     monkeypatch.setattr(llm, "_call_qianfan", fake_call)
+    llm._turn_cache.clear()  # 避免跨用例缓存命中
     return captured
 
 
@@ -41,3 +42,20 @@ async def test_deep_plan_uses_deep_model(fresh_session, capture_model):
 def test_legacy_qianfan_model_maps_to_deep(monkeypatch):
     monkeypatch.setattr(settings, "qianfan_model", "legacy-deep")
     assert settings.model_deep == "legacy-deep"
+
+
+async def test_identical_turn_is_cached(fresh_session, capture_model):
+    calls = {"n": 0}
+    orig = llm._call_qianfan
+
+    async def counting(messages, model):
+        calls["n"] += 1
+        return await orig(messages, model)
+
+    llm._call_qianfan = counting  # type: ignore
+    try:
+        await llm.generate_turn(fresh_session, "同一句话")
+        await llm.generate_turn(fresh_session, "同一句话")
+    finally:
+        llm._call_qianfan = orig  # type: ignore
+    assert calls["n"] == 1  # 第二次命中缓存

@@ -16,7 +16,7 @@ from app.models.schemas import (
     SessionState,
     TurnPlan,
 )
-from app.services import cost, llm, zone_engine
+from app.services import cost, guardrails, llm, zone_engine
 from app.services.zone_engine import ZoneValidationError
 
 logger = logging.getLogger("whiteboard-advisor.dialogue")
@@ -63,6 +63,12 @@ async def handle_utterance(session: Session, utterance: str) -> list[dict]:
         msg = "今天我们已经聊了不少,先到这儿吧。要不要让一位持牌经纪人帮你深入做一版?"
         return [{"type": "finalize", "narration": msg}, {"type": "ai_message", "narration": msg, "intent": "terminate", "targetZone": None, "nextQuestion": None}]
     events: list[dict] = []
+
+    # 合规后置校验:软化绝对化措辞、对疑似证券代码追加免责
+    clean_narration, violations = guardrails.sanitize(plan.narration)
+    if violations:
+        logger.warning("guardrails 命中: %s", violations)
+    plan.narration = clean_narration
 
     # 超范围问题:不动主白板,降级为自由对话
     if plan.intent == IntentType.out_of_scope:

@@ -6,8 +6,10 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
+import time
 from enum import Enum
 from typing import Optional
 
@@ -28,6 +30,38 @@ class TaskKind(str, Enum):
 
 def _model_for(kind: TaskKind) -> str:
     return settings.model_deep if kind == TaskKind.deep_plan else settings.model_fast
+
+
+# 简单内存 turn 缓存:相同 (模板 + zone 状态 + 用户话) 24h 内复用,省成本/延迟
+_CACHE_TTL = 24 * 3600
+_turn_cache: dict[str, tuple[float, str]] = {}
+
+
+def _cache_key(session: Session, utterance: str) -> str:
+    zones_state = {zid: z.data for zid, z in session.zones.items() if z.data}
+    raw = json.dumps(
+        {"t": session.template_id, "z": zones_state, "u": utterance},
+        ensure_ascii=False,
+        sort_keys=True,
+    )
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _cache_get(key: str) -> Optional[str]:
+    hit = _turn_cache.get(key)
+    if not hit:
+        return None
+    ts, content = hit
+    if time.time() - ts > _CACHE_TTL:
+        _turn_cache.pop(key, None)
+        return None
+    return content
+
+
+def _cache_put(key: str, content: str) -> None:
+    if len(_turn_cache) > 500:
+        _turn_cache.clear()
+    _turn_cache[key] = (time.time(), content)
 
 SYSTEM_PROMPT = """你是一位资深的保险与财富规划顾问,正在通过"实时画白板"的方式帮客户做开局规划演示。
 
@@ -131,6 +165,13 @@ async def generate_turn(
     if not settings.has_llm:
         return _mock_turn(session, utterance)
     cost.check_budget(session.llm_cost)
+
+    cache_key = _cache_key(session, utterance) if repair_hint is None else None
+    if cache_key:
+        cached = _cache_get(cache_key)
+        if cached:
+            return _parse_turn(cached)
+
     messages = _build_messages(session, utterance, repair_hint)
     model = _model_for(kind)
     try:
@@ -146,6 +187,8 @@ async def generate_turn(
     session.llm_cost += cost.estimate(
         model, usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0)
     )
+    if cache_key:
+        _cache_put(cache_key, raw)
     return _parse_turn(raw)
 
 
