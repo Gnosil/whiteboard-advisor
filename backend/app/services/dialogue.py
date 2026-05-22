@@ -16,7 +16,7 @@ from app.models.schemas import (
     SessionState,
     TurnPlan,
 )
-from app.services import llm, zone_engine
+from app.services import cost, llm, zone_engine
 from app.services.zone_engine import ZoneValidationError
 
 logger = logging.getLogger("whiteboard-advisor.dialogue")
@@ -56,7 +56,12 @@ async def handle_utterance(session: Session, utterance: str) -> list[dict]:
     session.dialogue_history.append(DialogueEntry(role="user", content=utterance))
     session.state = SessionState.in_dialogue
 
-    plan, applied = await _resolve_turn(session, utterance)
+    try:
+        plan, applied = await _resolve_turn(session, utterance)
+    except cost.BudgetExceeded:
+        session.state = SessionState.review
+        msg = "今天我们已经聊了不少,先到这儿吧。要不要让一位持牌经纪人帮你深入做一版?"
+        return [{"type": "finalize", "narration": msg}, {"type": "ai_message", "narration": msg, "intent": "terminate", "targetZone": None, "nextQuestion": None}]
     events: list[dict] = []
 
     # 超范围问题:不动主白板,降级为自由对话

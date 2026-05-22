@@ -15,6 +15,7 @@ import httpx
 
 from app.config import settings
 from app.models.schemas import ActionType, IntentType, Language, Session, TurnPlan
+from app.services import cost
 from app.templates import registry
 
 logger = logging.getLogger("whiteboard-advisor.llm")
@@ -94,7 +95,7 @@ def _build_messages(session: Session, utterance: str, repair_hint: Optional[str]
     ]
 
 
-async def _call_qianfan(messages: list[dict], model: str) -> str:
+async def _call_qianfan(messages: list[dict], model: str) -> tuple[str, dict]:
     url = f"{settings.qianfan_base_url}/chat/completions"
     headers = {"Authorization": f"Bearer {settings.qianfan_api_key}"}
     payload = {
@@ -109,7 +110,7 @@ async def _call_qianfan(messages: list[dict], model: str) -> str:
         resp = await client.post(url, headers=headers, json=payload)
         resp.raise_for_status()
         data = resp.json()
-    return data["choices"][0]["message"]["content"]
+    return data["choices"][0]["message"]["content"], data.get("usage", {})
 
 
 def _parse_turn(raw: str) -> TurnPlan:
@@ -129,17 +130,22 @@ async def generate_turn(
 ) -> TurnPlan:
     if not settings.has_llm:
         return _mock_turn(session, utterance)
+    cost.check_budget(session.llm_cost)
     messages = _build_messages(session, utterance, repair_hint)
     model = _model_for(kind)
     try:
-        raw = await _call_qianfan(messages, model)
+        raw, usage = await _call_qianfan(messages, model)
     except httpx.HTTPStatusError as e:
         # 快模型不可用(如未开通)时回退到 deep 模型
         if kind == TaskKind.turn and model != settings.model_deep:
             logger.warning("快模型 %s 调用失败(%s),回退 deep 模型", model, e.response.status_code)
-            raw = await _call_qianfan(messages, settings.model_deep)
+            model = settings.model_deep
+            raw, usage = await _call_qianfan(messages, model)
         else:
             raise
+    session.llm_cost += cost.estimate(
+        model, usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0)
+    )
     return _parse_turn(raw)
 
 

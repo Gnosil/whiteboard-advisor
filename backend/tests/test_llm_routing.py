@@ -12,12 +12,13 @@ def capture_model(monkeypatch):
 
     async def fake_call(messages, model):
         captured["model"] = model
-        return TurnPlan(
+        content = TurnPlan(
             intent=IntentType.provide_info,
             action=ActionType.ask_next,
             target_zone=None,
             narration="ok",
         ).model_dump_json()
+        return content, {"prompt_tokens": 10, "completion_tokens": 5}
 
     monkeypatch.setattr(settings, "qianfan_api_key", "test-key")
     monkeypatch.setattr(settings, "qianfan_model", "")
