@@ -11,6 +11,7 @@ export interface ZoneStateEntry {
   data: Record<string, unknown>;
   version: number;
   animation?: "grow" | "morph" | "flash";
+  stale?: boolean;
 }
 
 export interface AiMessage {

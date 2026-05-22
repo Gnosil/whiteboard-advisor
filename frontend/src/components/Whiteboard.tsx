@@ -7,9 +7,10 @@ interface Props {
   zones: Record<string, ZoneStateEntry>;
   focus: string | null;
   lang: Lang;
+  onRefresh: (zoneId: string, title: string) => void;
 }
 
-export default function Whiteboard({ meta, zones, focus, lang }: Props) {
+export default function Whiteboard({ meta, zones, focus, lang, onRefresh }: Props) {
   const ordered = [...meta].sort((a, b) => a.order - b.order);
 
   return (
@@ -51,6 +52,23 @@ export default function Whiteboard({ meta, zones, focus, lang }: Props) {
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
               <span style={{ fontWeight: 700 }}>{z.title[lang]}</span>
               {!filled && <span style={{ fontSize: 12, color: "var(--muted)" }}>· 待填充</span>}
+              {filled && entry?.stale && (
+                <button
+                  onClick={() => onRefresh(z.id, z.title[lang])}
+                  title="上游信息已变,点击让 AI 更新这块"
+                  style={{
+                    marginLeft: "auto",
+                    fontSize: 11,
+                    padding: "2px 8px",
+                    borderRadius: 6,
+                    border: "1px solid #c98a2b",
+                    background: "rgba(201,138,43,0.15)",
+                    color: "#e0a84e",
+                  }}
+                >
+                  ⟳ 上游已变,更新
+                </button>
+              )}
             </div>
             <AnimatePresence mode="wait">
               {filled && Renderer ? (

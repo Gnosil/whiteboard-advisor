@@ -55,15 +55,23 @@ export default function App() {
         break;
       case "zone_update": {
         const zid = msg.zoneId as string;
-        setZones((prev) => ({
-          ...prev,
-          [zid]: {
-            id: zid,
-            data: msg.data as Record<string, unknown>,
-            version: msg.version as number,
-            animation: msg.animation as ZoneStateEntry["animation"],
-          },
-        }));
+        const staleZones = (msg.staleZones as string[]) || [];
+        setZones((prev) => {
+          const next = {
+            ...prev,
+            [zid]: {
+              id: zid,
+              data: msg.data as Record<string, unknown>,
+              version: msg.version as number,
+              animation: msg.animation as ZoneStateEntry["animation"],
+              stale: !!msg.stale,
+            },
+          };
+          for (const sz of staleZones) {
+            if (next[sz]) next[sz] = { ...next[sz], stale: true };
+          }
+          return next;
+        });
         setFocus(zid);
         break;
       }
@@ -219,7 +227,17 @@ export default function App() {
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
         <main style={{ flex: 1, padding: 20, display: "flex", minHeight: 0 }}>
           {zoneMeta.length > 0 ? (
-            <Whiteboard meta={zoneMeta} zones={zones} focus={focus} lang={lang} />
+            <Whiteboard
+              meta={zoneMeta}
+              zones={zones}
+              focus={focus}
+              lang={lang}
+              onRefresh={(_id, title) => {
+                if (thinking) return;
+                send({ type: "user_utterance", text: `请更新「${title}」,上游信息有变化` });
+                setTranscript((prev) => [...prev, { role: "user", text: `更新「${title}」` }]);
+              }}
+            />
           ) : (
             <div style={{ margin: "auto", color: "var(--muted)" }}>正在加载白板…</div>
           )}

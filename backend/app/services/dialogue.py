@@ -62,6 +62,10 @@ async def handle_utterance(session: Session, utterance: str) -> list[dict]:
     if applied and plan.target_zone:
         zone = session.zones[plan.target_zone]
         session.current_zone_focus = plan.target_zone
+        stale_zones = [
+            zid for zid in zone_engine.downstream_of(session, plan.target_zone)
+            if session.zones.get(zid) and session.zones[zid].stale
+        ]
         events.append(
             {
                 "type": "zone_update",
@@ -69,6 +73,7 @@ async def handle_utterance(session: Session, utterance: str) -> list[dict]:
                 "data": zone.data,
                 "version": zone.version,
                 "animation": "morph" if plan.action == ActionType.modify_zone else "grow",
+                "staleZones": stale_zones,
             }
         )
 
