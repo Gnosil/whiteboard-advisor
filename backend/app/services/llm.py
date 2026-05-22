@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+from enum import Enum
 from typing import Optional
 
 import httpx
@@ -17,6 +18,15 @@ from app.models.schemas import ActionType, IntentType, Language, Session, TurnPl
 from app.templates import family_protection as tpl
 
 logger = logging.getLogger("whiteboard-advisor.llm")
+
+
+class TaskKind(str, Enum):
+    turn = "turn"          # 交互轮:意图+zone+解说,用快模型
+    deep_plan = "deep_plan"  # 复杂多 zone 规划,用 deep 模型
+
+
+def _model_for(kind: TaskKind) -> str:
+    return settings.model_deep if kind == TaskKind.deep_plan else settings.model_fast
 
 SYSTEM_PROMPT = """你是一位资深的保险与财富规划顾问,正在通过"实时画白板"的方式帮客户做开局规划演示。
 
@@ -84,11 +94,11 @@ def _build_messages(session: Session, utterance: str, repair_hint: Optional[str]
     ]
 
 
-async def _call_qianfan(messages: list[dict]) -> str:
+async def _call_qianfan(messages: list[dict], model: str) -> str:
     url = f"{settings.qianfan_base_url}/chat/completions"
     headers = {"Authorization": f"Bearer {settings.qianfan_api_key}"}
     payload = {
-        "model": settings.qianfan_model,
+        "model": model,
         "messages": messages,
         "temperature": 0.4,
         "response_format": {"type": "json_object"},
@@ -111,11 +121,25 @@ def _parse_turn(raw: str) -> TurnPlan:
     return TurnPlan.model_validate(obj)
 
 
-async def generate_turn(session: Session, utterance: str, repair_hint: Optional[str] = None) -> TurnPlan:
+async def generate_turn(
+    session: Session,
+    utterance: str,
+    repair_hint: Optional[str] = None,
+    kind: TaskKind = TaskKind.turn,
+) -> TurnPlan:
     if not settings.has_llm:
         return _mock_turn(session, utterance)
     messages = _build_messages(session, utterance, repair_hint)
-    raw = await _call_qianfan(messages)
+    model = _model_for(kind)
+    try:
+        raw = await _call_qianfan(messages, model)
+    except httpx.HTTPStatusError as e:
+        # 快模型不可用(如未开通)时回退到 deep 模型
+        if kind == TaskKind.turn and model != settings.model_deep:
+            logger.warning("快模型 %s 调用失败(%s),回退 deep 模型", model, e.response.status_code)
+            raw = await _call_qianfan(messages, settings.model_deep)
+        else:
+            raise
     return _parse_turn(raw)
 
 
