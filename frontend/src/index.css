@@ -23,3 +23,17 @@ button {
   font-family: inherit;
   cursor: pointer;
 }
+
+/* 思考态顶部进度条 */
+.thinking-bar {
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  background-size: 40% 100%;
+  background-repeat: no-repeat;
+  animation: thinking-slide 1.1s ease-in-out infinite;
+}
+@keyframes thinking-slide {
+  0% { background-position: -40% 0; }
+  100% { background-position: 140% 0; }
+}

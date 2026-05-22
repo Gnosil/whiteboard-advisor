@@ -12,6 +12,7 @@ export default function App() {
   const [focus, setFocus] = useState<string | null>(null);
   const [transcript, setTranscript] = useState<AiMessage[]>([]);
   const [thinking, setThinking] = useState(false);
+  const [thinkingHint, setThinkingHint] = useState("");
   const [speechEnabled, setSpeechEnabled] = useState(false);
   const [finalized, setFinalized] = useState(false);
   const [text, setText] = useState("");
@@ -40,6 +41,7 @@ export default function App() {
         break;
       case "thinking":
         setThinking(true);
+        setThinkingHint((msg.hint as string) || "AI 正在思考…");
         break;
       case "zone_update": {
         const zid = msg.zoneId as string;
@@ -153,6 +155,8 @@ export default function App() {
         </div>
       </header>
 
+      {thinking && <div className="thinking-bar" />}
+
       {finalized && (
         <div
           style={{
@@ -224,7 +228,7 @@ export default function App() {
                 )}
               </div>
             ))}
-            {thinking && <div style={{ color: "var(--muted)", fontSize: 13 }}>AI 正在思考并作画…</div>}
+            {thinking && <div style={{ color: "var(--muted)", fontSize: 13 }}>{thinkingHint || "AI 正在思考…"}</div>}
           </div>
 
           <form onSubmit={submit} style={{ display: "flex", gap: 8, padding: 16, borderTop: "1px solid #232a33" }}>

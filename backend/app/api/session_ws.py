@@ -11,7 +11,7 @@ router = APIRouter()
 
 async def _run_turn(ws: WebSocket, session, text: str) -> None:
     """处理一句用户输入:对话编排 → 推送事件 → 对 narration 合成 TTS。"""
-    await ws.send_json({"type": "thinking"})
+    await ws.send_json({"type": "thinking", "hint": "正在分析你的需求并作画…"})
     try:
         events = await dialogue.handle_utterance(session, text)
     except Exception as e:  # noqa: BLE001
