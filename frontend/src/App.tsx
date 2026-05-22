@@ -13,8 +13,10 @@ export default function App() {
   const [transcript, setTranscript] = useState<AiMessage[]>([]);
   const [thinking, setThinking] = useState(false);
   const [speechEnabled, setSpeechEnabled] = useState(false);
+  const [finalized, setFinalized] = useState(false);
   const [text, setText] = useState("");
   const startedRef = useRef(false);
+  const sessionIdRef = useRef<string | null>(null);
   const tts = useTtsPlayer();
   const recorder = useRecorder();
 
@@ -23,6 +25,8 @@ export default function App() {
       case "session_started":
         setZoneMeta(msg.zones as ZoneMeta[]);
         setSpeechEnabled(!!msg.speechEnabled);
+        sessionIdRef.current = msg.sessionId as string;
+        localStorage.setItem("wb_session", msg.sessionId as string);
         break;
       case "asr_result":
         setTranscript((prev) => [...prev, { role: "user", text: msg.text as string }]);
@@ -60,6 +64,7 @@ export default function App() {
         break;
       case "finalize":
         setThinking(false);
+        setFinalized(true);
         break;
       case "error":
         setThinking(false);
@@ -73,7 +78,7 @@ export default function App() {
   useEffect(() => {
     if (status === "open" && !startedRef.current) {
       startedRef.current = true;
-      send({ type: "start", language: lang });
+      send({ type: "start", language: lang, sessionId: localStorage.getItem("wb_session") });
     }
   }, [status, send, lang]);
 
@@ -114,6 +119,22 @@ export default function App() {
         <span style={{ color: "var(--muted)", fontSize: 13 }}>家庭保障规划</span>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
           <button
+            onClick={() => {
+              localStorage.removeItem("wb_session");
+              location.reload();
+            }}
+            style={{
+              padding: "4px 10px",
+              borderRadius: 6,
+              border: "1px solid #2a323d",
+              background: "transparent",
+              color: "var(--muted)",
+              fontSize: 12,
+            }}
+          >
+            新建
+          </button>
+          <button
             onClick={() => setLang((l) => (l === "zh" ? "en" : "zh"))}
             style={{
               padding: "4px 10px",
@@ -131,6 +152,34 @@ export default function App() {
           </span>
         </div>
       </header>
+
+      {finalized && (
+        <div
+          style={{
+            padding: "12px 20px",
+            background: "linear-gradient(90deg, var(--accent-soft), transparent)",
+            borderBottom: "1px solid #232a33",
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+          }}
+        >
+          <span style={{ fontSize: 14 }}>✅ 规划草图已完成。要不要让一位持牌经纪人帮你深入做一版?</span>
+          <button
+            onClick={() => alert("(V0.1 demo) broker handoff 在 V0.5 接入")}
+            style={{
+              padding: "6px 14px",
+              borderRadius: 8,
+              border: "none",
+              background: "var(--accent)",
+              color: "#fff",
+              fontSize: 13,
+            }}
+          >
+            找经纪人深入
+          </button>
+        </div>
+      )}
 
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
         <main style={{ flex: 1, padding: 20, display: "flex", minHeight: 0 }}>

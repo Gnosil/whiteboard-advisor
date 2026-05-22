@@ -9,6 +9,9 @@ venv/
 .env
 .env.local
 
+# 运行时持久化数据
+backend/data/
+
 # Node
 node_modules/
 dist/

@@ -25,6 +25,31 @@ async def _run_turn(ws: WebSocket, session, text: str) -> None:
             audio = await speech.synthesize(narration, session.language)
             if audio:
                 await ws.send_json({"type": "tts_audio", "format": "mp3", "audio": audio})
+    session_store.save(session)
+
+
+async def _send_started(ws: WebSocket, session) -> None:
+    await ws.send_json(
+        {
+            "type": "session_started",
+            "sessionId": session.id,
+            "language": session.language.value,
+            "zones": zone_engine.zone_meta(),
+            "speechEnabled": speech.settings.has_speech,
+        }
+    )
+    # resume:把已填充的 zone 重新推给客户端
+    for zid, zone in session.zones.items():
+        if zone.data:
+            await ws.send_json(
+                {
+                    "type": "zone_update",
+                    "zoneId": zid,
+                    "data": zone.data,
+                    "version": zone.version,
+                    "animation": "flash",
+                }
+            )
 
 
 @router.websocket("/ws/session")
@@ -39,28 +64,12 @@ async def session_ws(ws: WebSocket) -> None:
             if mtype == "start":
                 lang = Language(msg.get("language", "zh"))
                 session = session_store.get_or_create(msg.get("sessionId"), lang)
-                await ws.send_json(
-                    {
-                        "type": "session_started",
-                        "sessionId": session.id,
-                        "language": session.language.value,
-                        "zones": zone_engine.zone_meta(),
-                        "speechEnabled": speech.settings.has_speech,
-                    }
-                )
+                await _send_started(ws, session)
                 continue
 
             if session is None:
                 session = session_store.create()
-                await ws.send_json(
-                    {
-                        "type": "session_started",
-                        "sessionId": session.id,
-                        "language": session.language.value,
-                        "zones": zone_engine.zone_meta(),
-                        "speechEnabled": speech.settings.has_speech,
-                    }
-                )
+                await _send_started(ws, session)
 
             if mtype == "set_language":
                 session.language = Language(msg.get("language", "zh"))
