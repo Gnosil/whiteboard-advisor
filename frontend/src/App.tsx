@@ -183,6 +183,23 @@ export default function App() {
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
           <button
             onClick={() => {
+              const sid = sessionIdRef.current;
+              if (sid) window.open(`/api/session/${sid}/pdf`, "_blank");
+            }}
+            title="导出当前规划为 PDF"
+            style={{
+              padding: "4px 10px",
+              borderRadius: 6,
+              border: "1px solid #2a323d",
+              background: "transparent",
+              color: "var(--muted)",
+              fontSize: 12,
+            }}
+          >
+            导出PDF
+          </button>
+          <button
+            onClick={() => {
               localStorage.removeItem("wb_session");
               location.reload();
             }}
