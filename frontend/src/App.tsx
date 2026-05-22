@@ -3,11 +3,13 @@ import { useSocket, type InboundMessage } from "./hooks/useSocket";
 import { useRecorder } from "./hooks/useRecorder";
 import { useTtsPlayer } from "./hooks/useTtsPlayer";
 import Whiteboard from "./components/Whiteboard";
-import type { AiMessage, Lang, ZoneMeta, ZoneStateEntry } from "./lib/types";
+import type { AiMessage, Lang, TemplateMeta, ZoneMeta, ZoneStateEntry } from "./lib/types";
 
 export default function App() {
   const [lang, setLang] = useState<Lang>("zh");
   const [zoneMeta, setZoneMeta] = useState<ZoneMeta[]>([]);
+  const [templates, setTemplates] = useState<TemplateMeta[]>([]);
+  const [templateId, setTemplateId] = useState("family-protection");
   const [zones, setZones] = useState<Record<string, ZoneStateEntry>>({});
   const [focus, setFocus] = useState<string | null>(null);
   const [transcript, setTranscript] = useState<AiMessage[]>([]);
@@ -25,9 +27,17 @@ export default function App() {
     switch (msg.type) {
       case "session_started":
         setZoneMeta(msg.zones as ZoneMeta[]);
+        setTemplates((msg.templates as TemplateMeta[]) || []);
+        setTemplateId(msg.templateId as string);
         setSpeechEnabled(!!msg.speechEnabled);
         sessionIdRef.current = msg.sessionId as string;
         localStorage.setItem("wb_session", msg.sessionId as string);
+        break;
+      case "template_changed":
+        setTemplateId(msg.templateId as string);
+        setZoneMeta(msg.zones as ZoneMeta[]);
+        setZones({});
+        setFinalized(false);
         break;
       case "asr_result":
         setTranscript((prev) => [...prev, { role: "user", text: msg.text as string }]);
@@ -118,7 +128,28 @@ export default function App() {
         }}
       >
         <strong style={{ fontSize: 18 }}>WhiteboardAdvisor</strong>
-        <span style={{ color: "var(--muted)", fontSize: 13 }}>家庭保障规划</span>
+        {templates.length > 0 && (
+          <select
+            value={templateId}
+            onChange={(e) => {
+              send({ type: "set_template", templateId: e.target.value });
+            }}
+            style={{
+              padding: "4px 8px",
+              borderRadius: 6,
+              border: "1px solid #2a323d",
+              background: "#0c0f13",
+              color: "var(--ink)",
+              fontSize: 13,
+            }}
+          >
+            {templates.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.title[lang]}
+              </option>
+            ))}
+          </select>
+        )}
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
           <button
             onClick={() => {

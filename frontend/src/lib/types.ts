@@ -59,3 +59,84 @@ export interface CoveragePlanData {
   total_premium?: number | null;
   disclaimer?: string;
 }
+
+export interface AssetAccount {
+  type: string;
+  value?: number | null;
+  unit?: string;
+  note?: string;
+}
+export interface IncomeAssetsData {
+  accounts: AssetAccount[];
+  total_investable?: number | null;
+  unit?: string;
+  summary?: string;
+}
+
+export interface EduChild {
+  name: string;
+  location?: string;
+  start_year?: number | null;
+  annual_cost?: number | null;
+  years?: number | null;
+  unit?: string;
+}
+export interface EducationFundData {
+  children: EduChild[];
+  total_need?: number | null;
+  funding_gap?: number | null;
+  unit?: string;
+  summary?: string;
+}
+
+export interface IncomeSource {
+  name: string;
+  annual?: number | null;
+  from_age?: number | null;
+}
+export interface RetirementCashflowData {
+  retire_age?: number | null;
+  annual_expense?: number | null;
+  income_sources?: IncomeSource[];
+  gap_years?: number | null;
+  unit?: string;
+  summary?: string;
+}
+
+export interface EstateStructure {
+  type: string;
+  beneficiary?: string;
+  jurisdiction?: string;
+  note?: string;
+}
+export interface EstateSuccessionData {
+  structures: EstateStructure[];
+  tax_notes?: string;
+  summary?: string;
+}
+
+export interface CrossBorderNote {
+  jurisdiction: string;
+  topic: string;
+  detail?: string;
+}
+export interface CrossBorderNotesData {
+  notes: CrossBorderNote[];
+  summary?: string;
+}
+
+export interface DashboardHighlight {
+  label: string;
+  value: string;
+  unit?: string;
+}
+export interface SummaryDashboardData {
+  highlights: DashboardHighlight[];
+  action_items?: string[];
+  summary?: string;
+}
+
+export interface TemplateMeta {
+  id: string;
+  title: { zh: string; en: string };
+}
