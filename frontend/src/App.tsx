@@ -17,6 +17,8 @@ export default function App() {
   const [thinkingHint, setThinkingHint] = useState("");
   const [speechEnabled, setSpeechEnabled] = useState(false);
   const [finalized, setFinalized] = useState(false);
+  const [showLeadForm, setShowLeadForm] = useState(false);
+  const [lead, setLead] = useState({ name: "", phone: "", email: "", preference: "" });
   const [text, setText] = useState("");
   const [idlePrompt, setIdlePrompt] = useState(false);
   const startedRef = useRef(false);
@@ -97,6 +99,10 @@ export default function App() {
         setThinking(false);
         setFinalized(true);
         break;
+      case "lead_result":
+        setShowLeadForm(false);
+        setTranscript((prev) => [...prev, { role: "ai", text: `🤝 ${msg.message as string}` }]);
+        break;
       case "error":
         setThinking(false);
         setTranscript((prev) => [...prev, { role: "ai", text: `⚠ ${msg.message}` }]);
@@ -148,6 +154,60 @@ export default function App() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      {showLeadForm && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100,
+          }}
+          onClick={() => setShowLeadForm(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: "var(--panel)", padding: 24, borderRadius: 14, width: 360, border: "1px solid #232a33" }}
+          >
+            <h3 style={{ marginTop: 0 }}>留下联系方式</h3>
+            <p style={{ color: "var(--muted)", fontSize: 13, marginTop: 0 }}>
+              我们会匹配一位持牌经纪人,带着你今天画的草图在 48 小时内联系你。
+            </p>
+            {(["name", "phone", "email", "preference"] as const).map((f) => (
+              <input
+                key={f}
+                value={lead[f]}
+                onChange={(e) => setLead((p) => ({ ...p, [f]: e.target.value }))}
+                placeholder={{ name: "称呼", phone: "电话", email: "邮箱", preference: "偏好(可选)" }[f]}
+                style={{ width: "100%", marginBottom: 8, padding: "8px 12px", borderRadius: 8, border: "1px solid #2a323d", background: "#0c0f13", color: "var(--ink)", fontSize: 14 }}
+              />
+            ))}
+            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+              <button
+                onClick={() => {
+                  if (!lead.name || (!lead.phone && !lead.email)) {
+                    alert("请至少填写称呼和一种联系方式");
+                    return;
+                  }
+                  send({ type: "lead_capture", contact: lead });
+                }}
+                style={{ flex: 1, padding: "10px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", fontSize: 14 }}
+              >
+                提交
+              </button>
+              <button
+                onClick={() => setShowLeadForm(false)}
+                style={{ padding: "10px 16px", borderRadius: 8, border: "1px solid #2a323d", background: "transparent", color: "var(--muted)", fontSize: 14 }}
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header
         style={{
           padding: "12px 20px",
@@ -275,7 +335,7 @@ export default function App() {
         >
           <span style={{ fontSize: 14 }}>✅ 规划草图已完成。要不要让一位持牌经纪人帮你深入做一版?</span>
           <button
-            onClick={() => alert("(V0.1 demo) broker handoff 在 V0.5 接入")}
+            onClick={() => setShowLeadForm(true)}
             style={{
               padding: "6px 14px",
               borderRadius: 8,

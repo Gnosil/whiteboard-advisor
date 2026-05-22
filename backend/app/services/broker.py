@@ -80,3 +80,17 @@ def match(tier: AssetTier, jurisdiction: str, language: str) -> Optional[Broker]
 
 def price_for(tier: AssetTier) -> float:
     return PRICE_BY_TIER.get(tier, 0.0)
+
+
+def infer_jurisdiction(session: Session) -> str:
+    text = " ".join(e.content for e in session.dialogue_history)
+    fp = session.zones.get("family_profile")
+    if fp and fp.data:
+        text += json.dumps(fp.data, ensure_ascii=False)
+    if any(k in text for k in ["香港", "HK", "粤"]):
+        return "HK"
+    if any(k in text for k in ["多伦多", "加拿大", "Toronto", "CA"]):
+        return "CA"
+    if any(k in text for k in ["美国", "US", "纽约", "加州"]):
+        return "US"
+    return "HK"  # 默认面向 HK 华人 HNW

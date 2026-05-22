@@ -3,6 +3,7 @@ import logging
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.broker_portal import router as broker_router
 from app.api.session_ws import router as session_router
 from app.config import settings
 from app.services import pdf_export, session_store, zone_engine
@@ -21,6 +22,7 @@ app.add_middleware(
 )
 
 app.include_router(session_router)
+app.include_router(broker_router)
 
 
 @app.get("/health")

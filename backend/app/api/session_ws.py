@@ -2,8 +2,8 @@ import logging
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from app.models.schemas import Language
-from app.services import dialogue, session_store, speech, zone_engine
+from app.models.schemas import ContactInfo, Language
+from app.services import dialogue, lead_store, session_store, speech, zone_engine
 from app.templates import registry
 
 logger = logging.getLogger("whiteboard-advisor.ws")
@@ -97,6 +97,48 @@ async def session_ws(ws: WebSocket) -> None:
                 text = (msg.get("text") or "").strip()
                 if text:
                     await _run_turn(ws, session, text)
+                continue
+
+            if mtype == "lead_capture":
+                c = msg.get("contact") or {}
+                contact = ContactInfo(
+                    name=c.get("name", ""),
+                    phone=c.get("phone", ""),
+                    email=c.get("email", ""),
+                    preference=c.get("preference", ""),
+                )
+                lead, matched = lead_store.capture(session, contact)
+                if lead.risky:
+                    await ws.send_json(
+                        {"type": "lead_result", "matched": False, "message": "我们会尽快与你联系。"}
+                    )
+                elif matched:
+                    await ws.send_json(
+                        {
+                            "type": "lead_result",
+                            "matched": True,
+                            "broker": {
+                                "name": matched.name,
+                                "city": matched.city,
+                                "years": matched.years_experience,
+                            },
+                            "message": (
+                                f"我们已为你匹配 {matched.name}({matched.city},{matched.years_experience} 年经验)。"
+                                f"她将在 48 小时内联系你,届时已看过你今天画的规划草图。"
+                            ),
+                        }
+                    )
+                else:
+                    await ws.send_json(
+                        {"type": "lead_result", "matched": False, "message": "暂未匹配到合适的经纪人,我们会人工跟进。"}
+                    )
+                continue
+
+            if mtype == "lead_cancel":
+                c = msg.get("contact") or {}
+                lead_store.record_cancel(
+                    ContactInfo(name=c.get("name", ""), phone=c.get("phone", ""), email=c.get("email", ""))
+                )
                 continue
 
             if mtype == "audio":
