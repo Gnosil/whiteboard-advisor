@@ -66,6 +66,28 @@ npm run dev
 > 语音需在 `backend/.env` 配 `BAIDU_SPEECH_API_KEY` / `BAIDU_SPEECH_SECRET_KEY`;未配时前端隐藏麦克风、降级为文字。
 > LLM 未配 `QIANFAN_API_KEY` 时走 mock 数据跑通流程。
 
+## 知识库 (RAG)
+
+`app/data/knowledge_seed.json` 是人工 curate 的 US/HK 公开规则种子库,`app/services/rag.py`
+按 (jurisdiction × query) 关键词召回并注入 LLM prompt,每条带 `source` 可追溯。
+
+`scripts/scrape_sample.py` 是**单页抓取样例**(非全量爬虫):
+
+```bash
+python -m scripts.scrape_sample <公开页面URL> --jurisdiction US --category regulation --keywords 遗产税,estate
+```
+
+> ⚠️ 全量 carrier/监管数据抓取 + 版权/ToS/法务 review 属本仓库之外的工作,不在 V0.1 范围。
+> 使用样例脚本请遵守目标站点 robots.txt 与频率限制。
+
+## 外部对接 TODO(纯软件已就绪,待接真实资源)
+
+- **真实 broker 网络**:当前用 `app/data/brokers_mock.json` 跑通匹配/handoff 软件闭环
+- **全量知识爬虫 + 法务**:见上,当前为种子库 + 单页样例
+- **React Native 移植**:当前 Web 端;移动端需 Apple/Google 开发者账号
+- **云部署**:当前文件持久化;生产需 AWS/Qdrant/Postgres
+- **Stripe 真实计费**:Premium 当前为 gating 占位
+
 ## 范围说明 (V0.1 不做)
 
-不做账号体系(匿名 session)、RAG、broker handoff、PDF 导出、share link。详见 PRD §0 Non-goals。
+不做账号体系(匿名 session)、大陆合规、账户连接(Plaid)、HNW bespoke 结构化产品。详见 PRD §0 Non-goals。

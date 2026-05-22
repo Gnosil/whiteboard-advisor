@@ -90,6 +90,17 @@ class ActionType(str, Enum):
     finalize = "finalize"
 
 
+class KnowledgeChunk(BaseModel):
+    id: str
+    jurisdiction: str  # US / HK / CA / global
+    category: str      # product / tax_rule / regulation / methodology
+    text: str
+    source: str
+    confidence_level: str = "scraped"  # official / derived / scraped
+    effective_date: Optional[str] = None
+    keywords: list[str] = Field(default_factory=list)
+
+
 class TurnPlan(BaseModel):
     """LLM 单轮编排输出。zone_data 必须通过对应 zone 的 JSON Schema 校验。"""
 

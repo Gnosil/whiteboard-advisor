@@ -1,0 +1,122 @@
+[
+  {
+    "id": "us-estate-tax-exemption",
+    "jurisdiction": "US",
+    "category": "tax_rule",
+    "text": "美国联邦遗产税设有统一抵免额(unified credit),超过免税额的应税遗产适用最高 40% 的联邦遗产税率。免税额逐年随通胀调整,跨境家庭尤其是非美国税务居民(NRA)的免税额规则与美国公民/居民差异很大,需单独核实。",
+    "source": "IRS Estate Tax (general)",
+    "confidence_level": "derived",
+    "effective_date": "2025-01-01",
+    "keywords": ["遗产税", "estate tax", "免税额", "传承", "美国", "US", "NRA", "跨境"]
+  },
+  {
+    "id": "us-life-insurance-death-benefit-tax",
+    "jurisdiction": "US",
+    "category": "tax_rule",
+    "text": "在美国,人寿保险的身故理赔金(death benefit)通常无需缴纳联邦所得税。但若保单为被保险人本人所有,理赔金可能计入其应税遗产;通过不可撤销人寿保险信托(ILIT)持有保单常用于将理赔金移出应税遗产。",
+    "source": "IRS Pub 525 / general practice",
+    "confidence_level": "derived",
+    "effective_date": "2025-01-01",
+    "keywords": ["寿险", "life insurance", "理赔", "death benefit", "所得税", "ILIT", "信托", "遗产"]
+  },
+  {
+    "id": "hk-no-estate-duty",
+    "jurisdiction": "HK",
+    "category": "tax_rule",
+    "text": "香港自 2006 年 2 月 11 日起废除遗产税(estate duty)。因此在香港身故的资产本身不再征收遗产税,但跨境资产(如美国 situs 资产、内地资产)仍可能受相关司法管辖区税务规则约束。",
+    "source": "HK Estate Duty Ordinance (abolished 2006)",
+    "confidence_level": "official",
+    "effective_date": "2006-02-11",
+    "keywords": ["香港", "HK", "遗产税", "estate duty", "传承", "跨境"]
+  },
+  {
+    "id": "hk-no-capital-gains-tax",
+    "jurisdiction": "HK",
+    "category": "tax_rule",
+    "text": "香港不征收一般性的资本利得税(capital gains tax),投资买卖的资本增值通常不课税。但若被认定为经营性质的交易利润,可能按利得税处理。",
+    "source": "HK Inland Revenue (general)",
+    "confidence_level": "derived",
+    "effective_date": "2025-01-01",
+    "keywords": ["香港", "HK", "资本利得", "capital gains", "投资", "税"]
+  },
+  {
+    "id": "us-situs-assets-nra",
+    "jurisdiction": "US",
+    "category": "tax_rule",
+    "text": "非美国税务居民(NRA)持有的美国境内资产(US situs assets),例如美国公司股票、美国境内不动产,可能面临美国遗产税,且 NRA 的遗产税免税额远低于美国公民/居民。常见规划是通过境外公司或保险结构持有,降低 US situs 暴露。",
+    "source": "IRS NRA estate tax (general)",
+    "confidence_level": "derived",
+    "effective_date": "2025-01-01",
+    "keywords": ["NRA", "US situs", "美国资产", "遗产税", "跨境", "股票", "不动产", "传承"]
+  },
+  {
+    "id": "critical-illness-definition",
+    "jurisdiction": "global",
+    "category": "product",
+    "text": "重疾险(critical illness)在确诊合同约定的重大疾病(如癌症、心肌梗塞、中风等)时一次性给付保额,用于弥补治疗费用与收入中断。不同保单对疾病定义、等待期、给付次数差异很大,应以条款为准。",
+    "source": "industry general",
+    "confidence_level": "derived",
+    "effective_date": null,
+    "keywords": ["重疾", "critical illness", "重大疾病", "癌症", "保额", "给付", "保障"]
+  },
+  {
+    "id": "term-vs-whole-life",
+    "jurisdiction": "global",
+    "category": "product",
+    "text": "定期寿险(term life)在固定保障期内提供较高保额、保费较低,适合覆盖收入替代等阶段性需求;终身寿险(whole/universal life)提供终身保障并积累现金价值,常用于财富传承与流动性安排,保费更高。",
+    "source": "industry general",
+    "confidence_level": "derived",
+    "effective_date": null,
+    "keywords": ["定期寿险", "term life", "终身寿险", "whole life", "现金价值", "保额", "保费", "传承", "配置"]
+  },
+  {
+    "id": "income-replacement-rule",
+    "jurisdiction": "global",
+    "category": "methodology",
+    "text": "寿险保额的常用经验法则之一是覆盖家庭年收入的 10 倍左右,或按'未偿债务 + 未来若干年生活开支 + 子女教育金 - 现有可变现资产'估算缺口。仅为一般性思路,需结合具体家庭情况调整。",
+    "source": "planning methodology (general)",
+    "confidence_level": "derived",
+    "effective_date": null,
+    "keywords": ["保额", "缺口", "收入替代", "寿险", "教育金", "债务", "方法", "估算"]
+  },
+  {
+    "id": "education-cost-overseas",
+    "jurisdiction": "global",
+    "category": "methodology",
+    "text": "海外高等教育的总开销需考虑学费 + 生活费,并按入学年份做通胀贴现。英美加澳等地年开销差异较大,跨境家庭还需考虑汇率与货币错配风险,教育金规划通常按每个子女单独建模。",
+    "source": "planning methodology (general)",
+    "confidence_level": "derived",
+    "effective_date": null,
+    "keywords": ["教育金", "education", "海外", "学费", "子女", "通胀", "汇率", "跨境"]
+  },
+  {
+    "id": "retirement-withdrawal-rule",
+    "jurisdiction": "global",
+    "category": "methodology",
+    "text": "退休现金流规划常用'目标年支出 - 各类被动收入(养老金/年金/租金/投资收益)= 缺口'的框架,并评估资产能支撑的年数。4% 提取率是常被引用的经验值,但并不保证适用所有市场环境与寿命假设。",
+    "source": "planning methodology (general)",
+    "confidence_level": "derived",
+    "effective_date": null,
+    "keywords": ["退休", "retirement", "现金流", "提取率", "年金", "养老金", "缺口", "被动收入"]
+  },
+  {
+    "id": "trust-for-succession",
+    "jurisdiction": "global",
+    "category": "methodology",
+    "text": "信托(trust)常用于财富传承,可实现资产隔离、按意愿分配、跨代规划与一定的税务/隐私安排。不同司法管辖区对信托的承认与税务处理不同,跨境家庭设立前应取得当地法律与税务意见。",
+    "source": "planning methodology (general)",
+    "confidence_level": "derived",
+    "effective_date": null,
+    "keywords": ["信托", "trust", "传承", "资产隔离", "跨境", "分配", "税务", "succession"]
+  },
+  {
+    "id": "us-fbar-reporting",
+    "jurisdiction": "US",
+    "category": "regulation",
+    "text": "美国税务居民/公民持有境外金融账户合计超过一定门槛时,需向 FinCEN 申报(FBAR),并可能触发 FATCA 下的 8938 表申报义务。跨境家庭中有美籍成员时,需特别注意境外账户与保单的申报合规。",
+    "source": "FinCEN FBAR / FATCA (general)",
+    "confidence_level": "derived",
+    "effective_date": "2025-01-01",
+    "keywords": ["FBAR", "FATCA", "美籍", "境外账户", "申报", "合规", "跨境", "US"]
+  }
+]

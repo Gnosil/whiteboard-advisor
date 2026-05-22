@@ -17,7 +17,7 @@ import httpx
 
 from app.config import settings
 from app.models.schemas import ActionType, IntentType, Language, Session, TurnPlan
-from app.services import cost
+from app.services import cost, rag
 from app.templates import registry
 
 logger = logging.getLogger("whiteboard-advisor.llm")
@@ -97,6 +97,15 @@ narration 不是泛泛的回应,而是**向客户解说你刚刚在白板上做�
 - 只输出 JSON,不要任何额外文字或 markdown 代码块。"""
 
 
+def _infer_jurisdiction(session: Session, utterance: str) -> str:
+    text = utterance + " ".join(e.content for e in session.dialogue_history[-6:])
+    if any(k in text for k in ["香港", "HK", "港", "粤"]):
+        return "HK"
+    if any(k in text for k in ["美国", "US", "美籍", "纽约", "加州"]):
+        return "US"
+    return "global"
+
+
 def _zone_schemas_text(template_id: str) -> str:
     parts = []
     for z in registry.template_zone_defs(template_id):
@@ -116,9 +125,13 @@ def _build_messages(session: Session, utterance: str, repair_hint: Optional[str]
             {"role": e.role, "content": e.content} for e in session.dialogue_history[-8:]
         ],
     }
+    jurisdiction = _infer_jurisdiction(session, utterance)
+    kb = rag.context_block(utterance, jurisdiction)
+    kb_section = f"\n\n{kb}\n" if kb else ""
+
     user_content = (
         f"当前白板状态:\n{json.dumps(context, ensure_ascii=False)}\n\n"
-        f"客户最新说的话:「{utterance}」\n\n请输出本轮的 JSON。"
+        f"客户最新说的话:「{utterance}」{kb_section}\n请输出本轮的 JSON。"
     )
     if repair_hint:
         user_content += f"\n\n注意:上一次输出的 zone_data 未通过 schema 校验,错误:{repair_hint}。请修正后重新输出完整 JSON。"
