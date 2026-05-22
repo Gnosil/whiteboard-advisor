@@ -1,0 +1,52 @@
+[
+  {
+    "id": "bk-hk-01",
+    "name": "陈慧敏 Vivian Chan",
+    "city": "Hong Kong",
+    "jurisdictions": ["HK"],
+    "languages": ["zh", "yue", "en"],
+    "specialties": ["family-protection", "education", "cross-border"],
+    "accepted_lead_tiers": ["affluent", "hnw"],
+    "years_experience": 12
+  },
+  {
+    "id": "bk-hk-02",
+    "name": "李国华 Ken Lee",
+    "city": "Hong Kong",
+    "jurisdictions": ["HK"],
+    "languages": ["zh", "en"],
+    "specialties": ["retirement", "estate"],
+    "accepted_lead_tiers": ["mass-affluent", "affluent"],
+    "years_experience": 8
+  },
+  {
+    "id": "bk-us-01",
+    "name": "Grace Wong",
+    "city": "New York",
+    "jurisdictions": ["US"],
+    "languages": ["zh", "en"],
+    "specialties": ["estate", "cross-border", "family-protection"],
+    "accepted_lead_tiers": ["hnw"],
+    "years_experience": 15
+  },
+  {
+    "id": "bk-us-02",
+    "name": "David Miller",
+    "city": "San Francisco",
+    "jurisdictions": ["US"],
+    "languages": ["en"],
+    "specialties": ["retirement", "family-protection"],
+    "accepted_lead_tiers": ["mass-affluent", "affluent"],
+    "years_experience": 6
+  },
+  {
+    "id": "bk-ca-01",
+    "name": "Sophie Tremblay",
+    "city": "Toronto",
+    "jurisdictions": ["CA"],
+    "languages": ["en", "zh"],
+    "specialties": ["education", "retirement"],
+    "accepted_lead_tiers": ["mass-affluent", "affluent", "hnw"],
+    "years_experience": 10
+  }
+]

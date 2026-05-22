@@ -90,6 +90,53 @@ class ActionType(str, Enum):
     finalize = "finalize"
 
 
+class AssetTier(str, Enum):
+    mass_affluent = "mass-affluent"  # < $500K
+    affluent = "affluent"            # $500K - $2M
+    hnw = "hnw"                      # > $2M
+    unknown = "unknown"
+
+
+class LeadStatus(str, Enum):
+    pending = "pending"
+    matched = "matched"
+    contacted = "contacted"
+    closed_won = "closed_won"
+    closed_lost = "closed_lost"
+
+
+class ContactInfo(BaseModel):
+    name: str = ""
+    phone: str = ""
+    email: str = ""
+    preference: str = ""
+
+
+class Lead(BaseModel):
+    id: str = Field(default_factory=_uuid)
+    session_id: str
+    status: LeadStatus = LeadStatus.pending
+    tier: AssetTier = AssetTier.unknown
+    matched_broker_id: Optional[str] = None
+    price_charged: Optional[float] = None
+    contact: ContactInfo = Field(default_factory=ContactInfo)
+    risky: bool = False
+    created_at: datetime = Field(default_factory=_now)
+    claimed_at: Optional[datetime] = None
+    sla_due_at: Optional[datetime] = None
+
+
+class Broker(BaseModel):
+    id: str
+    name: str
+    city: str = ""
+    jurisdictions: list[str] = Field(default_factory=list)
+    languages: list[str] = Field(default_factory=list)
+    specialties: list[str] = Field(default_factory=list)
+    accepted_lead_tiers: list[AssetTier] = Field(default_factory=list)
+    years_experience: int = 0
+
+
 class KnowledgeChunk(BaseModel):
     id: str
     jurisdiction: str  # US / HK / CA / global
