@@ -7,10 +7,11 @@ export interface InboundMessage {
   [key: string]: unknown;
 }
 
-export function useSocket(path = "/ws/session") {
+export function useSocket(onMessage: (msg: InboundMessage) => void, path = "/ws/session") {
   const wsRef = useRef<WebSocket | null>(null);
+  const cbRef = useRef(onMessage);
+  cbRef.current = onMessage;
   const [status, setStatus] = useState<SocketStatus>("connecting");
-  const [messages, setMessages] = useState<InboundMessage[]>([]);
 
   useEffect(() => {
     const proto = location.protocol === "https:" ? "wss" : "ws";
@@ -21,8 +22,7 @@ export function useSocket(path = "/ws/session") {
     ws.onclose = () => setStatus("closed");
     ws.onmessage = (ev) => {
       try {
-        const msg = JSON.parse(ev.data) as InboundMessage;
-        setMessages((prev) => [...prev, msg]);
+        cbRef.current(JSON.parse(ev.data) as InboundMessage);
       } catch {
         // ignore non-JSON frames
       }
@@ -33,10 +33,8 @@ export function useSocket(path = "/ws/session") {
 
   const send = useCallback((data: unknown) => {
     const ws = wsRef.current;
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(data));
-    }
+    if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(data));
   }, []);
 
-  return { status, messages, send };
+  return { status, send };
 }
