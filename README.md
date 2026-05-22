@@ -58,10 +58,23 @@ npm run dev
 
 ## 里程碑
 
+**V0.1 闭环(M1–M4):**
 - [x] **M1 全栈骨架** — FastAPI + WebSocket,前端连通
 - [x] **M2 Zone Engine + LLM** — family-protection 模板,文字版闭环
 - [x] **M3 语音闭环** — 百度 ASR(16k PCM 录音)+ TTS + 打断处理
-- [ ] **M4 持久化 + 打磨** — session autosave/resume,动画,中英切换
+- [x] **M4 持久化 + 打磨** — session autosave/resume,动画,中英切换
+
+**全量建设(Phase 0–9,见 [实施计划](docs/superpowers/plans/2026-05-22-prd-buildout.md)):**
+- [x] **P0 测试基建** — pytest + FakeLLM,47 个测试
+- [x] **P1 延迟优化** — 交互/深度模型分流,思考态反馈
+- [x] **P2 9 zone + 4 模板** — 全 9 zone,family/retirement/education/comprehensive 模板
+- [x] **P3 Zone 依赖管理** — 上游变更使下游 stale + 更新提示
+- [x] **P4 对话健壮性** — out_of_scope 自由对话、60s 沉默、ASR 失败转文字
+- [x] **P5 Session 增强** — PDF 导出、只读分享链接
+- [x] **P6 LLM 编排** — 成本上限、turn 缓存、合规 guardrails
+- [x] **P7 RAG 知识库** — US/HK 种子库 + 关键词检索注入 + 抓取样例
+- [x] **P8 Broker Funnel** — lead 打分/匹配/定价、handoff、反作弊、broker portal
+- [x] **P9 Onboarding** — 三屏引导、语音 persona、i18n、Premium gating 占位
 
 > 语音需在 `backend/.env` 配 `BAIDU_SPEECH_API_KEY` / `BAIDU_SPEECH_SECRET_KEY`;未配时前端隐藏麦克风、降级为文字。
 > LLM 未配 `QIANFAN_API_KEY` 时走 mock 数据跑通流程。
