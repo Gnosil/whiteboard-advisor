@@ -93,7 +93,9 @@ async def _call_qianfan(messages: list[dict]) -> str:
         "temperature": 0.4,
         "response_format": {"type": "json_object"},
     }
-    async with httpx.AsyncClient(timeout=30) as client:
+    # deepseek 等推理型模型较慢,且上下文增长后更慢,给足读超时
+    timeout = httpx.Timeout(connect=10, read=120, write=30, pool=10)
+    async with httpx.AsyncClient(timeout=timeout) as client:
         resp = await client.post(url, headers=headers, json=payload)
         resp.raise_for_status()
         data = resp.json()
