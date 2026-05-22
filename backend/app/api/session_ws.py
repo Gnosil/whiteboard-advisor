@@ -4,6 +4,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.models.schemas import Language
 from app.services import dialogue, session_store, speech, zone_engine
+from app.templates import registry
 
 logger = logging.getLogger("whiteboard-advisor.ws")
 router = APIRouter()
@@ -34,7 +35,9 @@ async def _send_started(ws: WebSocket, session) -> None:
             "type": "session_started",
             "sessionId": session.id,
             "language": session.language.value,
-            "zones": zone_engine.zone_meta(),
+            "templateId": session.template_id,
+            "templates": registry.template_meta(),
+            "zones": zone_engine.zone_meta(session),
             "speechEnabled": speech.settings.has_speech,
         }
     )
@@ -48,6 +51,7 @@ async def _send_started(ws: WebSocket, session) -> None:
                     "data": zone.data,
                     "version": zone.version,
                     "animation": "flash",
+                    "stale": zone.stale,
                 }
             )
 
@@ -63,7 +67,8 @@ async def session_ws(ws: WebSocket) -> None:
 
             if mtype == "start":
                 lang = Language(msg.get("language", "zh"))
-                session = session_store.get_or_create(msg.get("sessionId"), lang)
+                tid = msg.get("templateId") or registry.DEFAULT_TEMPLATE
+                session = session_store.get_or_create(msg.get("sessionId"), lang, tid)
                 await _send_started(ws, session)
                 continue
 
@@ -73,6 +78,19 @@ async def session_ws(ws: WebSocket) -> None:
 
             if mtype == "set_language":
                 session.language = Language(msg.get("language", "zh"))
+                continue
+
+            if mtype == "set_template":
+                tid = msg.get("templateId") or registry.DEFAULT_TEMPLATE
+                if registry.exists(tid):
+                    session_store.set_template(session, tid)
+                    await ws.send_json(
+                        {
+                            "type": "template_changed",
+                            "templateId": session.template_id,
+                            "zones": zone_engine.zone_meta(session),
+                        }
+                    )
                 continue
 
             if mtype == "user_utterance":

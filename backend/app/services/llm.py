@@ -15,7 +15,7 @@ import httpx
 
 from app.config import settings
 from app.models.schemas import ActionType, IntentType, Language, Session, TurnPlan
-from app.templates import family_protection as tpl
+from app.templates import registry
 
 logger = logging.getLogger("whiteboard-advisor.llm")
 
@@ -62,16 +62,16 @@ narration 不是泛泛的回应,而是**向客户解说你刚刚在白板上做�
 - 只输出 JSON,不要任何额外文字或 markdown 代码块。"""
 
 
-def _zone_schemas_text() -> str:
+def _zone_schemas_text(template_id: str) -> str:
     parts = []
-    for z in tpl.ZONE_DEFS:
+    for z in registry.template_zone_defs(template_id):
         parts.append(f"- {z['id']} ({z['title']['zh']}):\n{json.dumps(z['schema'], ensure_ascii=False)}")
     return "\n".join(parts)
 
 
 def _build_messages(session: Session, utterance: str, repair_hint: Optional[str] = None) -> list[dict]:
     lang = "中文" if session.language == Language.zh else "English"
-    system = SYSTEM_PROMPT.format(zone_schemas=_zone_schemas_text(), language=lang)
+    system = SYSTEM_PROMPT.format(zone_schemas=_zone_schemas_text(session.template_id), language=lang)
 
     zones_state = {zid: z.data for zid, z in session.zones.items() if z.data}
     context = {
@@ -146,8 +146,9 @@ async def generate_turn(
 # ---- Mock 模式:无 key 时跑通流程 ----
 
 def _mock_turn(session: Session, utterance: str) -> TurnPlan:
-    filled = [z for z in tpl.ZONE_IDS if session.zones.get(z) and session.zones[z].data]
-    next_zone = next((z for z in tpl.ZONE_IDS if z not in filled), None)
+    zone_ids = registry.template_zone_ids(session.template_id)
+    filled = [z for z in zone_ids if session.zones.get(z) and session.zones[z].data]
+    next_zone = next((z for z in zone_ids if z not in filled), None)
 
     if next_zone == "family_profile" or (next_zone is None and not filled):
         return TurnPlan(
@@ -196,10 +197,20 @@ def _mock_turn(session: Session, utterance: str) -> TurnPlan:
             narration="(mock 模式) 配置上,我建议一份定期寿险打底,加一份终身重疾。这只是方向,落地要找持牌经纪人。",
             next_question="要不要让一位专业经纪人帮你深入做一版?",
         )
+    if next_zone is not None:
+        # 非 family 模板的 zone:mock 下仅追问,不杜撰数据
+        title = registry.zl.ALL_ZONE_BY_ID.get(next_zone, {}).get("title", {}).get("zh", next_zone)
+        return TurnPlan(
+            intent=IntentType.clarification_question,
+            action=ActionType.ask_next,
+            target_zone=next_zone,
+            narration=f"(mock 模式) 接下来看「{title}」,需要你补充一些信息。",
+            next_question=f"关于{title},能跟我说说你的情况吗?",
+        )
     return TurnPlan(
         intent=IntentType.terminate,
         action=ActionType.finalize,
         target_zone=None,
-        narration="(mock 模式) 我们已经过了一遍家庭结构、保障缺口和配置方向。",
+        narration="(mock 模式) 我们已经过了一遍各个模块。",
         next_question=None,
     )

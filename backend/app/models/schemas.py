@@ -52,6 +52,7 @@ class Zone(BaseModel):
     state: ZoneState = ZoneState.empty
     data: dict[str, Any] = Field(default_factory=dict)
     version: int = 0
+    stale: bool = False  # 上游 zone 变更后,已填充的下游标记为待更新
     last_updated: datetime = Field(default_factory=_now)
 
 

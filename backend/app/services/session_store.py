@@ -51,8 +51,8 @@ def _load(session_id: str) -> Optional[Session]:
         return None
 
 
-def create(language: Language = Language.zh) -> Session:
-    s = Session(language=language, state=SessionState.template_loaded)
+def create(language: Language = Language.zh, template_id: str = "family-protection") -> Session:
+    s = Session(language=language, template_id=template_id, state=SessionState.template_loaded)
     zone_engine.init_zones(s)
     save(s)
     return s
@@ -62,9 +62,24 @@ def get(session_id: str) -> Optional[Session]:
     return _load(session_id)
 
 
-def get_or_create(session_id: Optional[str], language: Language = Language.zh) -> Session:
+def get_or_create(
+    session_id: Optional[str], language: Language = Language.zh, template_id: str = "family-protection"
+) -> Session:
     if session_id:
         existing = _load(session_id)
         if existing:
             return existing
-    return create(language)
+    return create(language, template_id)
+
+
+def set_template(session: Session, template_id: str) -> Session:
+    """切换模板:重置 zones 为新模板骨架(已有同名 zone 数据保留)。"""
+    session.template_id = template_id
+    old = session.zones
+    session.zones = {}
+    zone_engine.init_zones(session)
+    for zid, z in session.zones.items():
+        if zid in old and old[zid].data:
+            session.zones[zid] = old[zid]
+    save(session)
+    return session
