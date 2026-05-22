@@ -18,8 +18,11 @@ export default function App() {
   const [speechEnabled, setSpeechEnabled] = useState(false);
   const [finalized, setFinalized] = useState(false);
   const [text, setText] = useState("");
+  const [idlePrompt, setIdlePrompt] = useState(false);
   const startedRef = useRef(false);
   const sessionIdRef = useRef<string | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tts = useTtsPlayer();
   const recorder = useRecorder();
 
@@ -45,6 +48,7 @@ export default function App() {
       case "asr_failed":
         setThinking(false);
         setTranscript((prev) => [...prev, { role: "ai", text: `⚠ ${msg.message}` }]);
+        setTimeout(() => inputRef.current?.focus(), 0);
         break;
       case "tts_audio":
         tts.enqueue(msg.audio as string);
@@ -109,10 +113,21 @@ export default function App() {
     }
   }, [status, send, lang]);
 
+  // 60 秒无活动 → 主动问候
+  useEffect(() => {
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    if (thinking) return;
+    idleTimerRef.current = setTimeout(() => setIdlePrompt(true), 60000);
+    return () => {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    };
+  }, [transcript.length, thinking]);
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const t = text.trim();
     if (!t || thinking) return;
+    setIdlePrompt(false);
     setTranscript((prev) => [...prev, { role: "user", text: t }]);
     send({ type: "user_utterance", text: t });
     setText("");
@@ -285,6 +300,11 @@ export default function App() {
               </div>
             ))}
             {thinking && <div style={{ color: "var(--muted)", fontSize: 13 }}>{thinkingHint || "AI 正在思考…"}</div>}
+            {idlePrompt && !thinking && (
+              <div style={{ alignSelf: "flex-start", background: "var(--panel)", padding: "8px 12px", borderRadius: 12, fontSize: 14 }}>
+                还在吗?需要换个话题,或者继续刚才的规划?
+              </div>
+            )}
           </div>
 
           <form onSubmit={submit} style={{ display: "flex", gap: 8, padding: 16, borderTop: "1px solid #232a33" }}>
@@ -306,6 +326,7 @@ export default function App() {
               </button>
             )}
             <input
+              ref={inputRef}
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder={lang === "zh" ? "说点什么…" : "Say something…"}
