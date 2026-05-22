@@ -22,7 +22,7 @@ async def _run_turn(ws: WebSocket, session, text: str) -> None:
     for ev in events:
         await ws.send_json(ev)
         narration = ev.get("narration") if isinstance(ev, dict) else None
-        if ev.get("type") in ("ai_message", "finalize") and narration:
+        if ev.get("type") in ("ai_message", "finalize", "free_chat") and narration:
             audio = await speech.synthesize(narration, session.language)
             if audio:
                 await ws.send_json({"type": "tts_audio", "format": "mp3", "audio": audio})

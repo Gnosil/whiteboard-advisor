@@ -59,6 +59,14 @@ async def handle_utterance(session: Session, utterance: str) -> list[dict]:
     plan, applied = await _resolve_turn(session, utterance)
     events: list[dict] = []
 
+    # 超范围问题:不动主白板,降级为自由对话
+    if plan.intent == IntentType.out_of_scope:
+        events.append({"type": "free_chat", "narration": plan.narration})
+        session.dialogue_history.append(
+            DialogueEntry(role="ai", content=plan.narration, intent=plan.intent)
+        )
+        return events
+
     if applied and plan.target_zone:
         zone = session.zones[plan.target_zone]
         session.current_zone_focus = plan.target_zone

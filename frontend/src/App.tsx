@@ -82,6 +82,13 @@ export default function App() {
           { role: "ai", text: msg.narration as string, nextQuestion: (msg.nextQuestion as string) ?? null },
         ]);
         break;
+      case "free_chat":
+        setThinking(false);
+        setTranscript((prev) => [
+          ...prev,
+          { role: "ai", text: `💬 ${msg.narration as string}` },
+        ]);
+        break;
       case "finalize":
         setThinking(false);
         setFinalized(true);
