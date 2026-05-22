@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSocket, type InboundMessage } from "./hooks/useSocket";
+import { useRecorder } from "./hooks/useRecorder";
+import { useTtsPlayer } from "./hooks/useTtsPlayer";
 import Whiteboard from "./components/Whiteboard";
 import type { AiMessage, Lang, ZoneMeta, ZoneStateEntry } from "./lib/types";
 
@@ -10,13 +12,27 @@ export default function App() {
   const [focus, setFocus] = useState<string | null>(null);
   const [transcript, setTranscript] = useState<AiMessage[]>([]);
   const [thinking, setThinking] = useState(false);
+  const [speechEnabled, setSpeechEnabled] = useState(false);
   const [text, setText] = useState("");
   const startedRef = useRef(false);
+  const tts = useTtsPlayer();
+  const recorder = useRecorder();
 
   const onMessage = useCallback((msg: InboundMessage) => {
     switch (msg.type) {
       case "session_started":
         setZoneMeta(msg.zones as ZoneMeta[]);
+        setSpeechEnabled(!!msg.speechEnabled);
+        break;
+      case "asr_result":
+        setTranscript((prev) => [...prev, { role: "user", text: msg.text as string }]);
+        break;
+      case "asr_failed":
+        setThinking(false);
+        setTranscript((prev) => [...prev, { role: "ai", text: `⚠ ${msg.message}` }]);
+        break;
+      case "tts_audio":
+        tts.enqueue(msg.audio as string);
         break;
       case "thinking":
         setThinking(true);
@@ -68,6 +84,19 @@ export default function App() {
     setTranscript((prev) => [...prev, { role: "user", text: t }]);
     send({ type: "user_utterance", text: t });
     setText("");
+  };
+
+  const toggleMic = async () => {
+    if (recorder.recording) {
+      const audio = await recorder.stop();
+      if (audio) {
+        setThinking(true);
+        send({ type: "audio", data: audio });
+      }
+    } else {
+      tts.stop(); // 打断:用户开口立刻停掉 AI 解说
+      await recorder.start();
+    }
   };
 
   return (
@@ -150,6 +179,23 @@ export default function App() {
           </div>
 
           <form onSubmit={submit} style={{ display: "flex", gap: 8, padding: 16, borderTop: "1px solid #232a33" }}>
+            {speechEnabled && (
+              <button
+                type="button"
+                onClick={toggleMic}
+                title={recorder.recording ? "点击结束并发送" : "点击说话"}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: recorder.recording ? "#ff5a5a" : "#2a323d",
+                  color: "#fff",
+                  fontSize: 16,
+                }}
+              >
+                {recorder.recording ? "■" : "🎙"}
+              </button>
+            )}
             <input
               value={text}
               onChange={(e) => setText(e.target.value)}

@@ -59,9 +59,12 @@ npm run dev
 ## 里程碑
 
 - [x] **M1 全栈骨架** — FastAPI + WebSocket,前端连通
-- [ ] **M2 Zone Engine + LLM** — family-protection 模板,文字版闭环
-- [ ] **M3 语音闭环** — ASR + TTS + 打断处理
+- [x] **M2 Zone Engine + LLM** — family-protection 模板,文字版闭环
+- [x] **M3 语音闭环** — 百度 ASR(16k PCM 录音)+ TTS + 打断处理
 - [ ] **M4 持久化 + 打磨** — session autosave/resume,动画,中英切换
+
+> 语音需在 `backend/.env` 配 `BAIDU_SPEECH_API_KEY` / `BAIDU_SPEECH_SECRET_KEY`;未配时前端隐藏麦克风、降级为文字。
+> LLM 未配 `QIANFAN_API_KEY` 时走 mock 数据跑通流程。
 
 ## 范围说明 (V0.1 不做)
 

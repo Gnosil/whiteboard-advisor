@@ -3,10 +3,28 @@ import logging
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.models.schemas import Language
-from app.services import dialogue, session_store, zone_engine
+from app.services import dialogue, session_store, speech, zone_engine
 
 logger = logging.getLogger("whiteboard-advisor.ws")
 router = APIRouter()
+
+
+async def _run_turn(ws: WebSocket, session, text: str) -> None:
+    """处理一句用户输入:对话编排 → 推送事件 → 对 narration 合成 TTS。"""
+    await ws.send_json({"type": "thinking"})
+    try:
+        events = await dialogue.handle_utterance(session, text)
+    except Exception as e:  # noqa: BLE001
+        logger.exception("turn failed")
+        await ws.send_json({"type": "error", "message": f"处理出错: {e}"})
+        return
+    for ev in events:
+        await ws.send_json(ev)
+        narration = ev.get("narration") if isinstance(ev, dict) else None
+        if ev.get("type") in ("ai_message", "finalize") and narration:
+            audio = await speech.synthesize(narration, session.language)
+            if audio:
+                await ws.send_json({"type": "tts_audio", "format": "mp3", "audio": audio})
 
 
 @router.websocket("/ws/session")
@@ -27,6 +45,7 @@ async def session_ws(ws: WebSocket) -> None:
                         "sessionId": session.id,
                         "language": session.language.value,
                         "zones": zone_engine.zone_meta(),
+                        "speechEnabled": speech.settings.has_speech,
                     }
                 )
                 continue
@@ -39,22 +58,32 @@ async def session_ws(ws: WebSocket) -> None:
                         "sessionId": session.id,
                         "language": session.language.value,
                         "zones": zone_engine.zone_meta(),
+                        "speechEnabled": speech.settings.has_speech,
                     }
                 )
 
+            if mtype == "set_language":
+                session.language = Language(msg.get("language", "zh"))
+                continue
+
             if mtype == "user_utterance":
                 text = (msg.get("text") or "").strip()
-                if not text:
+                if text:
+                    await _run_turn(ws, session, text)
+                continue
+
+            if mtype == "audio":
+                audio_b64 = msg.get("data")
+                if not audio_b64:
                     continue
-                await ws.send_json({"type": "thinking"})
-                try:
-                    events = await dialogue.handle_utterance(session, text)
-                    for ev in events:
-                        await ws.send_json(ev)
-                except Exception as e:  # noqa: BLE001
-                    logger.exception("turn failed")
+                transcript = await speech.transcribe(audio_b64, session.language)
+                if not transcript:
                     await ws.send_json(
-                        {"type": "error", "message": f"处理出错: {e}"}
+                        {"type": "asr_failed", "message": "没听清,可以再说一次或改用文字。"}
                     )
+                    continue
+                await ws.send_json({"type": "asr_result", "text": transcript})
+                await _run_turn(ws, session, transcript)
+                continue
     except WebSocketDisconnect:
         logger.info("client disconnected")
