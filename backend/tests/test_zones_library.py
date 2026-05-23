@@ -13,12 +13,22 @@ VALID_SAMPLES = {
     "estate_succession": {"structures": [{"type": "信托"}]},
     "cross_border_notes": {"notes": [{"jurisdiction": "US", "topic": "遗产税"}]},
     "summary_dashboard": {"highlights": [{"label": "总缺口", "value": "400万"}]},
+    "life_stage_early": {"items": [{"category": "保险", "action": "配置定期寿险"}], "focus": "积累"},
+    "life_stage_mid": {"items": [{"category": "资产配置", "action": "跨境分散配置"}]},
+    "life_stage_retire": {"items": [{"category": "传承", "action": "设立信托"}]},
 }
 
 
-def test_all_nine_zones_defined():
-    assert len(zl.ZONE_DEFS) == 9
+def test_all_zones_have_samples():
     assert set(VALID_SAMPLES) == set(zl.ALL_ZONE_BY_ID)
+
+
+def test_stage_zone_content_is_flexible():
+    # 阶段板块的 category 不写死,任意类别都应通过校验
+    for cat in ["保险", "资产配置", "教育金", "退休", "传承", "现金流", "税务"]:
+        assert zone_engine.validate_zone_data(
+            "life_stage_mid", {"items": [{"category": cat, "action": "x"}]}
+        ) is None
 
 
 def test_valid_samples_pass():

@@ -8,6 +8,7 @@ import RetirementCashflow from "./RetirementCashflow";
 import EstateSuccession from "./EstateSuccession";
 import CrossBorderNotes from "./CrossBorderNotes";
 import SummaryDashboard from "./SummaryDashboard";
+import LifeStage from "./LifeStage";
 
 // zone id → 纯函数渲染组件(data → JSX)。新增 zone 在此注册。
 export const ZONE_RENDERERS: Record<string, ComponentType<{ data: any }>> = {
@@ -20,4 +21,7 @@ export const ZONE_RENDERERS: Record<string, ComponentType<{ data: any }>> = {
   estate_succession: EstateSuccession,
   cross_border_notes: CrossBorderNotes,
   summary_dashboard: SummaryDashboard,
+  life_stage_early: LifeStage,
+  life_stage_mid: LifeStage,
+  life_stage_retire: LifeStage,
 };

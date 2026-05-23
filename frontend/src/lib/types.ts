@@ -138,6 +138,19 @@ export interface SummaryDashboardData {
   summary?: string;
 }
 
+export interface StagePlanItem {
+  category: string;
+  action: string;
+  priority?: string | null;
+  note?: string;
+}
+export interface LifeStageData {
+  age_range?: string;
+  focus?: string;
+  items: StagePlanItem[];
+  summary?: string;
+}
+
 export interface TemplateMeta {
   id: string;
   title: { zh: string; en: string };

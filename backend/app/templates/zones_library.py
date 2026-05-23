@@ -6,6 +6,36 @@
 
 from __future__ import annotations
 
+
+def _stage_schema() -> dict:
+    """人生阶段规划板块的灵活 schema:骨架固定,内容(items)灵活,
+    category 不写死(保险/资产配置/教育金/退休/传承/现金流/税务…均可)。"""
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["items"],
+        "properties": {
+            "age_range": {"type": "string"},   # 该阶段对应的实际年龄区间(AI 按客户年龄填)
+            "focus": {"type": "string"},        # 这个阶段的规划重点
+            "items": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["category", "action"],
+                    "properties": {
+                        "category": {"type": "string"},  # 保险 / 资产配置 / 教育金 / 退休 / 传承 / 现金流 / 税务
+                        "action": {"type": "string"},    # 具体规划动作/建议
+                        "priority": {"type": ["string", "null"]},  # 高/中/低
+                        "note": {"type": "string"},
+                    },
+                },
+            },
+            "summary": {"type": "string"},
+        },
+    }
+
+
 # 每个 zone:id, order(全局布局序), title{zh,en}, schema, dependencies
 ZONE_DEFS: list[dict] = [
     {
@@ -275,6 +305,28 @@ ZONE_DEFS: list[dict] = [
                 "summary": {"type": "string"},
             },
         },
+    },
+    # ---- 人生阶段规划(时间维度,内容灵活)----
+    {
+        "id": "life_stage_early",
+        "order": 10,
+        "title": {"zh": "积累期 (≈40岁前)", "en": "Accumulation (≤40)"},
+        "dependencies": ["family_profile"],
+        "schema": _stage_schema(),
+    },
+    {
+        "id": "life_stage_mid",
+        "order": 11,
+        "title": {"zh": "成熟期 (40–60岁)", "en": "Maturity (40–60)"},
+        "dependencies": ["family_profile"],
+        "schema": _stage_schema(),
+    },
+    {
+        "id": "life_stage_retire",
+        "order": 12,
+        "title": {"zh": "退休期 (60岁后)", "en": "Retirement (60+)"},
+        "dependencies": ["family_profile"],
+        "schema": _stage_schema(),
     },
 ]
 

@@ -19,7 +19,11 @@ TEMPLATES: dict[str, dict] = {
     },
     "comprehensive": {
         "title": {"zh": "综合财富配置", "en": "Comprehensive"},
-        "zone_ids": [z["id"] for z in zl.ZONE_DEFS],  # 全 9 zone
+        "zone_ids": [z["id"] for z in zl.ZONE_DEFS if not z["id"].startswith("life_stage")],
+    },
+    "life-stage": {
+        "title": {"zh": "人生阶段规划", "en": "Life-Stage Planning"},
+        "zone_ids": ["family_profile", "life_stage_early", "life_stage_mid", "life_stage_retire"],
     },
 }
 
