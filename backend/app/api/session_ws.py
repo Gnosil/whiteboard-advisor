@@ -3,34 +3,57 @@ import logging
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.models.schemas import ContactInfo, Language
-from app.services import dialogue, lead_store, session_store, speech, zone_engine
+from app.services import dialogue, guardrails, lead_store, session_store, speech, zone_engine
 from app.templates import registry
 
 logger = logging.getLogger("whiteboard-advisor.ws")
 router = APIRouter()
 
 
+async def _tts_send(ws: WebSocket, session, text: str) -> None:
+    """对单句做合规处理后合成 TTS 并推送(前端按到达顺序排队播放)。"""
+    clean, _ = guardrails.sanitize(text)
+    if not clean.strip():
+        return
+    audio = await speech.synthesize(
+        clean, session.language, speech.voice_for_persona(session.voice_persona)
+    )
+    if audio:
+        await ws.send_json({"type": "tts_audio", "format": "mp3", "audio": audio})
+
+
 async def _run_turn(ws: WebSocket, session, text: str) -> None:
-    """处理一句用户输入:流式编排 → 边收边推 → 对最终 narration 合成 TTS。"""
+    """处理一句用户输入:流式编排 → 边收边推;narration 每完成一句即流式合成 TTS。
+
+    TTS 与 narration 来自同一次 LLM 生成的同一段文本(强关联),按句切分流式播报。
+    """
     await ws.send_json({"type": "thinking", "hint": "正在分析你的需求并作画…"})
-    final_narration = None
+    tts_buf = ""           # 流式 narration 的 TTS 待合成缓冲
+    got_delta = False
+    fallback_narration = None  # 无 delta 的路径(如预算超限)用整段兜底
     try:
         async for ev in dialogue.handle_utterance_stream(session, text):
             await ws.send_json(ev)
-            if ev.get("type") in ("ai_message", "finalize", "free_chat") and ev.get("narration"):
-                final_narration = ev["narration"]
+            t = ev.get("type")
+            if t == "narration_delta":
+                got_delta = True
+                tts_buf += ev.get("text", "")
+                sentences, tts_buf = speech.pop_sentences(tts_buf)
+                for s in sentences:
+                    await _tts_send(ws, session, s)
+            elif t in ("ai_message", "finalize", "free_chat") and ev.get("narration"):
+                fallback_narration = ev["narration"]
     except Exception as e:  # noqa: BLE001
         logger.exception("turn failed")
         await ws.send_json({"type": "error", "message": f"处理出错: {e}"})
         return
+
     session_store.save(session)
-    # 解说全部生成后,对最终(已合规处理的)narration 合成一次 TTS
-    if final_narration:
-        audio = await speech.synthesize(
-            final_narration, session.language, speech.voice_for_persona(session.voice_persona)
-        )
-        if audio:
-            await ws.send_json({"type": "tts_audio", "format": "mp3", "audio": audio})
+    if got_delta:
+        if tts_buf.strip():  # 收尾未成句的尾巴
+            await _tts_send(ws, session, tts_buf)
+    elif fallback_narration:  # 没有流式 delta(如预算超限路径)
+        await _tts_send(ws, session, fallback_narration)
 
 
 async def _send_started(ws: WebSocket, session) -> None:

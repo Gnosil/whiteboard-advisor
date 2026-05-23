@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import base64
 import logging
+import re
 import time
 from typing import Optional
 
@@ -37,6 +38,22 @@ PERSONA_VOICE = {
 
 def voice_for_persona(persona: str) -> int:
     return PERSONA_VOICE.get(persona, TTS_VOICE_MALE)
+
+
+_SENT_RE = re.compile(r"[^。！？!?\n]*[。！？!?\n]")
+
+
+def pop_sentences(buf: str) -> tuple[list[str], str]:
+    """从流式 narration 缓冲里切出完整句子,返回 (完整句列表, 剩余未完成片段)。
+    用于流式 TTS:每完成一句就合成一句。"""
+    sentences: list[str] = []
+    last = 0
+    for m in _SENT_RE.finditer(buf):
+        s = m.group()
+        if s.strip():
+            sentences.append(s)
+        last = m.end()
+    return sentences, buf[last:]
 
 
 async def _get_token() -> Optional[str]:
