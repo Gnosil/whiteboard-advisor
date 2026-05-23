@@ -216,7 +216,7 @@ export default function App() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ background: "var(--panel)", padding: 24, borderRadius: 14, width: 360, border: "1px solid #232a33" }}
+            style={{ background: "var(--panel)", padding: 24, borderRadius: 14, width: 360, border: "1px solid var(--border)" }}
           >
             <h3 style={{ marginTop: 0 }}>留下联系方式</h3>
             <p style={{ color: "var(--muted)", fontSize: 13, marginTop: 0 }}>
@@ -228,7 +228,7 @@ export default function App() {
                 value={lead[f]}
                 onChange={(e) => setLead((p) => ({ ...p, [f]: e.target.value }))}
                 placeholder={{ name: "称呼", phone: "电话", email: "邮箱", preference: "偏好(可选)" }[f]}
-                style={{ width: "100%", marginBottom: 8, padding: "8px 12px", borderRadius: 8, border: "1px solid #2a323d", background: "#0c0f13", color: "var(--ink)", fontSize: 14 }}
+                style={{ width: "100%", marginBottom: 8, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--field)", color: "var(--ink)", fontSize: 14 }}
               />
             ))}
             <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
@@ -246,7 +246,7 @@ export default function App() {
               </button>
               <button
                 onClick={() => setShowLeadForm(false)}
-                style={{ padding: "10px 16px", borderRadius: 8, border: "1px solid #2a323d", background: "transparent", color: "var(--muted)", fontSize: 14 }}
+                style={{ padding: "10px 16px", borderRadius: 8, border: "1px solid var(--border)", background: "transparent", color: "var(--muted)", fontSize: 14 }}
               >
                 取消
               </button>
@@ -258,7 +258,7 @@ export default function App() {
       <header
         style={{
           padding: "12px 20px",
-          borderBottom: "1px solid #232a33",
+          borderBottom: "1px solid var(--border)",
           display: "flex",
           alignItems: "center",
           gap: 12,
@@ -274,8 +274,8 @@ export default function App() {
             style={{
               padding: "4px 8px",
               borderRadius: 6,
-              border: "1px solid #2a323d",
-              background: "#0c0f13",
+              border: "1px solid var(--border)",
+              background: "var(--field)",
               color: "var(--ink)",
               fontSize: 13,
             }}
@@ -303,7 +303,7 @@ export default function App() {
             style={{
               padding: "4px 10px",
               borderRadius: 6,
-              border: "1px solid #2a323d",
+              border: "1px solid var(--border)",
               background: "transparent",
               color: "var(--muted)",
               fontSize: 12,
@@ -330,7 +330,7 @@ export default function App() {
             style={{
               padding: "4px 10px",
               borderRadius: 6,
-              border: "1px solid #2a323d",
+              border: "1px solid var(--border)",
               background: "transparent",
               color: "var(--muted)",
               fontSize: 12,
@@ -346,7 +346,7 @@ export default function App() {
             style={{
               padding: "4px 10px",
               borderRadius: 6,
-              border: "1px solid #2a323d",
+              border: "1px solid var(--border)",
               background: "transparent",
               color: "var(--muted)",
               fontSize: 12,
@@ -359,7 +359,7 @@ export default function App() {
             style={{
               padding: "4px 10px",
               borderRadius: 6,
-              border: "1px solid #2a323d",
+              border: "1px solid var(--border)",
               background: "transparent",
               color: "var(--ink)",
               fontSize: 12,
@@ -367,7 +367,7 @@ export default function App() {
           >
             {lang === "zh" ? "中文" : "EN"}
           </button>
-          <span style={{ fontSize: 13, color: status === "open" ? "#3ddc84" : "#ff7a7a" }}>
+          <span style={{ fontSize: 13, color: status === "open" ? "var(--accent)" : "var(--danger)" }}>
             {status === "open" ? t("connected", lang) : t("connecting", lang)}
           </span>
         </div>
@@ -380,7 +380,7 @@ export default function App() {
           style={{
             padding: "12px 20px",
             background: "linear-gradient(90deg, var(--accent-soft), transparent)",
-            borderBottom: "1px solid #232a33",
+            borderBottom: "1px solid var(--border)",
             display: "flex",
             alignItems: "center",
             gap: 16,
@@ -425,7 +425,7 @@ export default function App() {
         <aside
           style={{
             width: 340,
-            borderLeft: "1px solid #232a33",
+            borderLeft: "1px solid var(--border)",
             display: "flex",
             flexDirection: "column",
             minHeight: 0,
@@ -464,7 +464,7 @@ export default function App() {
             )}
           </div>
 
-          <form onSubmit={submit} style={{ display: "flex", gap: 8, padding: 16, borderTop: "1px solid #232a33" }}>
+          <form onSubmit={submit} style={{ display: "flex", gap: 8, padding: 16, borderTop: "1px solid var(--border)" }}>
             {speechEnabled && (
               <button
                 type="button"
@@ -474,7 +474,7 @@ export default function App() {
                   padding: "10px 14px",
                   borderRadius: 8,
                   border: "none",
-                  background: recorder.recording ? "#ff5a5a" : "#2a323d",
+                  background: recorder.recording ? "var(--danger)" : "var(--border)",
                   color: "#fff",
                   fontSize: 16,
                 }}
@@ -491,8 +491,8 @@ export default function App() {
                 flex: 1,
                 padding: "10px 14px",
                 borderRadius: 8,
-                border: "1px solid #2a323d",
-                background: "#0c0f13",
+                border: "1px solid var(--border)",
+                background: "var(--field)",
                 color: "var(--ink)",
                 fontSize: 14,
               }}
@@ -504,7 +504,7 @@ export default function App() {
                 padding: "10px 16px",
                 borderRadius: 8,
                 border: "none",
-                background: thinking ? "#2a323d" : "var(--accent)",
+                background: thinking ? "var(--border)" : "var(--accent)",
                 color: "#fff",
                 fontSize: 14,
               }}

@@ -18,14 +18,14 @@ export default function Onboarding({ onDone }: Props) {
 
   const card = (children: React.ReactNode) => (
     <div style={{ position: "fixed", inset: 0, background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200 }}>
-      <div style={{ width: 420, maxWidth: "90vw", padding: 28, background: "var(--panel)", borderRadius: 16, border: "1px solid #232a33" }}>{children}</div>
+      <div style={{ width: 420, maxWidth: "90vw", padding: 28, background: "var(--panel)", borderRadius: 16, border: "1px solid var(--border)" }}>{children}</div>
     </div>
   );
 
   const btn = (label: string, onClick: () => void, primary = true) => (
     <button
       onClick={onClick}
-      style={{ padding: "10px 18px", borderRadius: 8, border: primary ? "none" : "1px solid #2a323d", background: primary ? "var(--accent)" : "transparent", color: primary ? "#fff" : "var(--ink)", fontSize: 14 }}
+      style={{ padding: "10px 18px", borderRadius: 8, border: primary ? "none" : "1px solid var(--border)", background: primary ? "var(--accent)" : "transparent", color: primary ? "#fff" : "var(--ink)", fontSize: 14 }}
     >
       {label}
     </button>
@@ -41,7 +41,7 @@ export default function Onboarding({ onDone }: Props) {
             <button
               key={l}
               onClick={() => setLang(l)}
-              style={{ flex: 1, padding: 12, borderRadius: 10, border: lang === l ? "2px solid var(--accent)" : "1px solid #2a323d", background: "transparent", color: "var(--ink)", fontSize: 15 }}
+              style={{ flex: 1, padding: 12, borderRadius: 10, border: lang === l ? "2px solid var(--accent)" : "1px solid var(--border)", background: "transparent", color: "var(--ink)", fontSize: 15 }}
             >
               {l === "zh" ? "中文" : "English"}
             </button>
@@ -79,7 +79,7 @@ export default function Onboarding({ onDone }: Props) {
           <button
             key={p.id}
             onClick={() => setPersona(p.id)}
-            style={{ padding: 12, borderRadius: 10, border: persona === p.id ? "2px solid var(--accent)" : "1px solid #2a323d", background: "transparent", color: "var(--ink)", fontSize: 15, textAlign: "left" }}
+            style={{ padding: 12, borderRadius: 10, border: persona === p.id ? "2px solid var(--accent)" : "1px solid var(--border)", background: "transparent", color: "var(--ink)", fontSize: 15, textAlign: "left" }}
           >
             {p.label[lang]}
           </button>

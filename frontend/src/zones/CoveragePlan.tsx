@@ -13,8 +13,8 @@ export default function CoveragePlan({ data }: { data: CoveragePlanData }) {
         <div
           key={i}
           style={{
-            background: "#0f141b",
-            border: "1px solid #2a323d",
+            background: "var(--panel-2)",
+            border: "1px solid var(--border)",
             borderRadius: 10,
             padding: 12,
             marginBottom: 10,
@@ -35,7 +35,7 @@ export default function CoveragePlan({ data }: { data: CoveragePlanData }) {
         <div style={{ fontSize: 13, fontWeight: 600 }}>合计估算保费:{fmt(data.total_premium)}/年</div>
       )}
       {data.disclaimer && (
-        <p style={{ marginTop: 8, marginBottom: 0, color: "#ff9d6b", fontSize: 12 }}>⚠ {data.disclaimer}</p>
+        <p style={{ marginTop: 8, marginBottom: 0, color: "var(--warn)", fontSize: 12 }}>⚠ {data.disclaimer}</p>
       )}
     </div>
   );

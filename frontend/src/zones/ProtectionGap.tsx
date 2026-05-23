@@ -14,10 +14,10 @@ function GapBar({ item }: { item: GapItem }) {
     <div style={{ marginBottom: 12 }}>
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
         <span style={{ fontWeight: 600 }}>{item.category}</span>
-        <span style={{ color: "#ff9d6b" }}>缺口 {fmt(item.gap, item.unit)}</span>
+        <span style={{ color: "var(--warn)" }}>缺口 {fmt(item.gap, item.unit)}</span>
       </div>
-      <div style={{ height: 10, background: "#0f141b", borderRadius: 6, overflow: "hidden" }}>
-        <div style={{ width: `${pct}%`, height: "100%", background: "linear-gradient(90deg,#3ddc84,#4a9eff)" }} />
+      <div style={{ height: 10, background: "var(--panel-2)", borderRadius: 6, overflow: "hidden" }}>
+        <div style={{ width: `${pct}%`, height: "100%", background: "linear-gradient(90deg,#7FC8A6,var(--accent))" }} />
       </div>
       <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 3 }}>
         现有 {fmt(item.current, item.unit)} / 建议 {fmt(item.recommended, item.unit)}

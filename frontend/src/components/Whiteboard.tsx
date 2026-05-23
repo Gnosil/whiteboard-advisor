@@ -38,14 +38,14 @@ export default function Whiteboard({ meta, zones, focus, lang, onRefresh }: Prop
             animate={{
               opacity: 1,
               scale: 1,
-              boxShadow: isFocus ? "0 0 0 2px var(--accent), 0 0 24px var(--accent-soft)" : "none",
+              boxShadow: isFocus ? "0 0 0 2px var(--accent), 0 0 24px var(--accent-soft)" : "var(--shadow)",
             }}
             transition={{ type: "spring", stiffness: 220, damping: 24 }}
             style={{
               background: "var(--panel)",
               borderRadius: 14,
               padding: 16,
-              border: "1px solid #232a33",
+              border: "1px solid var(--border)",
               minHeight: 120,
             }}
           >
@@ -61,9 +61,9 @@ export default function Whiteboard({ meta, zones, focus, lang, onRefresh }: Prop
                     fontSize: 11,
                     padding: "2px 8px",
                     borderRadius: 6,
-                    border: "1px solid #c98a2b",
-                    background: "rgba(201,138,43,0.15)",
-                    color: "#e0a84e",
+                    border: "1px solid var(--amber)",
+                    background: "var(--amber-soft)",
+                    color: "var(--amber)",
                   }}
                 >
                   ⟳ 上游已变,更新
@@ -82,7 +82,7 @@ export default function Whiteboard({ meta, zones, focus, lang, onRefresh }: Prop
                   <Renderer data={entry.data} />
                 </motion.div>
               ) : (
-                <div style={{ color: "#3a444f", fontSize: 13 }}>AI 将在这里画出内容…</div>
+                <div style={{ color: "var(--muted)", fontSize: 13 }}>AI 将在这里画出内容…</div>
               )}
             </AnimatePresence>
           </motion.section>

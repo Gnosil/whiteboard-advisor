@@ -38,7 +38,7 @@ export default function ShareView({ token }: { token: string }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <header style={{ padding: "12px 20px", borderBottom: "1px solid #232a33", display: "flex", gap: 12, alignItems: "center" }}>
+      <header style={{ padding: "12px 20px", borderBottom: "1px solid var(--border)", display: "flex", gap: 12, alignItems: "center" }}>
         <strong style={{ fontSize: 18 }}>WhiteboardAdvisor</strong>
         <span style={{ color: "var(--muted)", fontSize: 13 }}>只读分享</span>
       </header>
@@ -46,7 +46,7 @@ export default function ShareView({ token }: { token: string }) {
         <main style={{ flex: 1, padding: 20, display: "flex", minHeight: 0 }}>
           <Whiteboard meta={data.zones} zones={zones} focus={null} lang={data.language} onRefresh={() => {}} />
         </main>
-        <aside style={{ width: 340, borderLeft: "1px solid #232a33", overflow: "auto", padding: 16 }}>
+        <aside style={{ width: 340, borderLeft: "1px solid var(--border)", overflow: "auto", padding: 16 }}>
           {data.dialogue.map((d, i) => (
             <div key={i} style={{ marginBottom: 8, alignSelf: d.role === "user" ? "flex-end" : "flex-start" }}>
               <div style={{ background: d.role === "user" ? "var(--accent)" : "var(--panel)", color: d.role === "user" ? "#fff" : "var(--ink)", padding: "8px 12px", borderRadius: 12, fontSize: 14 }}>

@@ -16,8 +16,8 @@ export default function FamilyProfile({ data }: { data: FamilyProfileData }) {
           <div
             key={i}
             style={{
-              background: "#0f141b",
-              border: "1px solid #2a323d",
+              background: "var(--panel-2)",
+              border: "1px solid var(--border)",
               borderRadius: 10,
               padding: "10px 14px",
               minWidth: 110,

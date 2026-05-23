@@ -38,7 +38,7 @@ export default function BrokerPortal() {
       <p style={{ color: "var(--muted)", fontSize: 13 }}>脱敏 lead 列表;claim 后 48h 内需联系客户。</p>
       {leads.length === 0 && <p style={{ color: "var(--muted)" }}>暂无 lead。</p>}
       {leads.map((l) => (
-        <div key={l.id} style={{ background: "var(--panel)", borderRadius: 12, padding: 16, marginBottom: 12, border: "1px solid #232a33" }}>
+        <div key={l.id} style={{ background: "var(--panel)", borderRadius: 12, padding: 16, marginBottom: 12, border: "1px solid var(--border)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <strong>{l.contactName || "(匿名)"}</strong>
             <span style={{ fontSize: 12, background: "var(--accent-soft)", color: "var(--accent)", padding: "2px 8px", borderRadius: 6 }}>
@@ -46,25 +46,25 @@ export default function BrokerPortal() {
             </span>
             <span style={{ fontSize: 12, color: "var(--muted)" }}>{l.status}</span>
             {l.priceCharged != null && <span style={{ fontSize: 12 }}>${l.priceCharged}</span>}
-            {l.risky && <span style={{ fontSize: 12, color: "#ff7a7a" }}>⚠ risky</span>}
+            {l.risky && <span style={{ fontSize: 12, color: "var(--danger)" }}>⚠ risky</span>}
             <button
               onClick={() => setOpen(open === l.id ? null : l.id)}
-              style={{ marginLeft: "auto", fontSize: 12, padding: "4px 10px", borderRadius: 6, border: "1px solid #2a323d", background: "transparent", color: "var(--ink)" }}
+              style={{ marginLeft: "auto", fontSize: 12, padding: "4px 10px", borderRadius: 6, border: "1px solid var(--border)", background: "transparent", color: "var(--ink)" }}
             >
               {open === l.id ? "收起白板" : "看白板"}
             </button>
             <button
               onClick={() => claim(l.id)}
               disabled={l.status === "contacted"}
-              style={{ fontSize: 12, padding: "4px 12px", borderRadius: 6, border: "none", background: l.status === "contacted" ? "#2a323d" : "var(--accent)", color: "#fff" }}
+              style={{ fontSize: 12, padding: "4px 12px", borderRadius: 6, border: "none", background: l.status === "contacted" ? "var(--border)" : "var(--accent)", color: "#fff" }}
             >
               {l.status === "contacted" ? "已 claim" : "Claim"}
             </button>
           </div>
           {l.preference && <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 6 }}>偏好:{l.preference}</div>}
-          {l.slaDueAt && <div style={{ fontSize: 12, color: "#e0a84e", marginTop: 4 }}>SLA 截止:{new Date(l.slaDueAt).toLocaleString()}</div>}
+          {l.slaDueAt && <div style={{ fontSize: 12, color: "var(--amber)", marginTop: 4 }}>SLA 截止:{new Date(l.slaDueAt).toLocaleString()}</div>}
           {open === l.id && (
-            <pre style={{ marginTop: 10, background: "#0c0f13", padding: 12, borderRadius: 8, fontSize: 12, overflow: "auto" }}>
+            <pre style={{ marginTop: 10, background: "var(--field)", padding: 12, borderRadius: 8, fontSize: 12, overflow: "auto" }}>
               {JSON.stringify(l.zoneData, null, 2)}
             </pre>
           )}

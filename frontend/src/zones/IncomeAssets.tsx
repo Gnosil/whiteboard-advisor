@@ -7,7 +7,7 @@ export default function IncomeAssets({ data }: { data: IncomeAssetsData }) {
       {(data.accounts ?? []).map((a, i) => (
         <div
           key={i}
-          style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid #1d242c", fontSize: 14 }}
+          style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--border)", fontSize: 14 }}
         >
           <span>{a.type}{a.note ? ` · ${a.note}` : ""}</span>
           <span style={{ color: "var(--accent)" }}>{fmtMoney(a.value, a.unit || data.unit)}</span>

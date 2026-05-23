@@ -1,11 +1,26 @@
 :root {
-  --bg: #0f1216;
-  --panel: #171b21;
-  --ink: #e8eef5;
-  --muted: #8a96a6;
-  --accent: #4a9eff;
-  --accent-soft: rgba(74, 158, 255, 0.15);
+  /* 浅色 + 绿:安全感、低疲劳,面向 45+ 用户 */
+  --bg: #EDF3ED;          /* 页面:柔和的淡绿米白,不刺眼 */
+  --panel: #FFFFFF;       /* 卡片 */
+  --panel-2: #F2F8F3;     /* 卡片内的小块 */
+  --field: #FFFFFF;       /* 输入框 */
+  --ink: #21302A;         /* 主文字:深墨绿(非纯黑,更柔和) */
+  --muted: #54665E;       /* 次要文字(对白底约 5:1) */
+  --border: #D6E3D9;      /* 柔和分隔线/边框 */
+  --border-strong: #C1D3C6;
+  --accent: #1F7A5C;      /* 信任绿(作按钮底+白字达 AA) */
+  --accent-strong: #175E47;
+  --accent-soft: #E3F1EA; /* 浅绿高亮/聚焦底 */
+  --warn: #B4552F;        /* 缺口/提醒(陶土橙,不惊扰) */
+  --amber: #9A6B12;       /* 待更新角标 */
+  --amber-soft: #FBEFD6;
+  --danger: #BC3B2E;      /* 错误/断连 */
+  --shadow: 0 1px 2px rgba(30, 55, 42, 0.06), 0 6px 18px rgba(30, 55, 42, 0.07);
+
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;        /* 适当放大基准,便于阅读 */
+  line-height: 1.6;
+  color-scheme: light;
 }
 
 * {
@@ -22,6 +37,10 @@ html, body, #root {
 button {
   font-family: inherit;
   cursor: pointer;
+}
+
+input, select, textarea {
+  font-family: inherit;
 }
 
 /* 思考态顶部进度条 */

@@ -4,7 +4,7 @@ export default function CrossBorderNotes({ data }: { data: CrossBorderNotesData 
   return (
     <div>
       {(data.notes ?? []).map((n, i) => (
-        <div key={i} style={{ padding: "6px 0", borderBottom: "1px solid #1d242c" }}>
+        <div key={i} style={{ padding: "6px 0", borderBottom: "1px solid var(--border)" }}>
           <div style={{ fontSize: 13 }}>
             <span style={{ background: "var(--accent-soft)", color: "var(--accent)", borderRadius: 4, padding: "1px 6px", fontSize: 11 }}>
               {n.jurisdiction}
