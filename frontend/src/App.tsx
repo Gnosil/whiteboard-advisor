@@ -84,19 +84,49 @@ export default function App() {
         setFocus(zid);
         break;
       }
+      case "narration_delta": {
+        setThinking(false);
+        const delta = msg.text as string;
+        setTranscript((prev) => {
+          const last = prev[prev.length - 1];
+          if (last && last.role === "ai" && last.streaming) {
+            const copy = [...prev];
+            copy[copy.length - 1] = { ...last, text: last.text + delta };
+            return copy;
+          }
+          return [...prev, { role: "ai", text: delta, streaming: true }];
+        });
+        break;
+      }
       case "ai_message":
         setThinking(false);
-        setTranscript((prev) => [
-          ...prev,
-          { role: "ai", text: msg.narration as string, nextQuestion: (msg.nextQuestion as string) ?? null },
-        ]);
+        setTranscript((prev) => {
+          const final = {
+            role: "ai" as const,
+            text: msg.narration as string,
+            nextQuestion: (msg.nextQuestion as string) ?? null,
+          };
+          const last = prev[prev.length - 1];
+          if (last && last.role === "ai" && last.streaming) {
+            const copy = [...prev];
+            copy[copy.length - 1] = final;
+            return copy;
+          }
+          return [...prev, final];
+        });
         break;
       case "free_chat":
         setThinking(false);
-        setTranscript((prev) => [
-          ...prev,
-          { role: "ai", text: `💬 ${msg.narration as string}` },
-        ]);
+        setTranscript((prev) => {
+          const text = `💬 ${msg.narration as string}`;
+          const last = prev[prev.length - 1];
+          if (last && last.role === "ai" && last.streaming) {
+            const copy = [...prev];
+            copy[copy.length - 1] = { role: "ai", text };
+            return copy;
+          }
+          return [...prev, { role: "ai", text }];
+        });
         break;
       case "finalize":
         setThinking(false);

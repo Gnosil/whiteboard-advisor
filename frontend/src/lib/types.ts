@@ -18,6 +18,7 @@ export interface AiMessage {
   role: "user" | "ai";
   text: string;
   nextQuestion?: string | null;
+  streaming?: boolean;
 }
 
 // ---- zone data 形状(与后端模板 JSON Schema 对应) ----

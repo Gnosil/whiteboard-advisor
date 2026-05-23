@@ -63,13 +63,36 @@ def _cache_put(key: str, content: str) -> None:
         _turn_cache.clear()
     _turn_cache[key] = (time.time(), content)
 
-SYSTEM_PROMPT = """你是一位资深的保险与财富规划顾问,正在通过"实时画白板"的方式帮客户做开局规划演示。
+# 流式输出的分隔符:narration 文本在前,之后是结构化 JSON
+PLAN_SENTINEL = "===PLAN==="
+
+_PROMPT_HEADER = """你是一位资深的保险与财富规划顾问,正在通过"实时画白板"的方式帮客户做开局规划演示。
 
 你的工作:根据客户的口语输入,在 family-protection 模板的若干 zone 上填充或修改**结构化数据**(不是 HTML)。
 
 可用 zone 及其数据 JSON Schema:
 {zone_schemas}
+"""
 
+_NARRATION_REQ = """★ narration 的核心要求(这是产品最关键的体验):
+narration 不是泛泛的回应,而是**向客户解说你刚刚在白板上做了哪些改动、以及为什么这么分析**。
+- update_zone:说清你在「哪个模块」新画/填了「什么内容」。例:"我在保障缺口这块画上了:你目前寿险是空白,按你 300 万资产和三个孩子,建议额度大概 300 万美金,所以这里有一个明显缺口。"
+- modify_zone:对比改动前后,说清你把「什么」从「旧值」改成了「新值」,以及原因。例:"我把寿险保额从 300 万上调到了 500 万,因为你刚提到还要覆盖两个孩子的海外学费。"
+- explain:不改白板时,指向对应模块解释客户的疑问。
+让客户听着 narration,就能明白屏幕上刚刚长出来/变化的那部分是什么、为什么。"""
+
+_RULES = """规则:
+- 客户提供新信息时,把它整理进最相关的 zone,zone_data 给出该 zone 合并后的完整 data;narration 必须解说这次改动。
+- 你能在上下文里看到该 zone 改动前的 data(zones_so_far),做 modify 时请据此对比出"改了什么"再说出来。
+- 客户没说够时,礼貌追问(next_question),不要瞎编客户的资产数字。
+- 始终用"一般性思路 (general guidance)"措辞,不给具体股票/基金代码,不预测市场涨跌。
+- 涉及具体产品配置时,在 coverage_plan 的 disclaimer 里写明"具体产品请咨询持牌经纪人"。
+- 语言:用 {language} 与客户交流(narration / next_question / 文案均用该语言)。"""
+
+# 非流式:单个严格 JSON(含 narration 字段)
+SYSTEM_PROMPT = (
+    _PROMPT_HEADER
+    + """
 每一轮你必须输出**严格的 JSON**,字段如下:
 {{
   "intent": 六选一: "provide_info" | "modify_request" | "clarification_question" | "topic_switch" | "out_of_scope" | "terminate",
@@ -80,21 +103,35 @@ SYSTEM_PROMPT = """你是一位资深的保险与财富规划顾问,正在通过
   "next_question": 你想主动追问客户的下一个问题,或 null
 }}
 
-★ narration 的核心要求(这是产品最关键的体验):
-narration 不是泛泛的回应,而是**向客户解说你刚刚在白板上做了哪些改动、以及为什么这么分析**。
-- update_zone:说清你在「哪个模块」新画/填了「什么内容」。例:"我在保障缺口这块画上了:你目前寿险是空白,按你 300 万资产和三个孩子,建议额度大概 300 万美金,所以这里有一个明显缺口。"
-- modify_zone:对比改动前后,说清你把「什么」从「旧值」改成了「新值」,以及原因。例:"我把寿险保额从 300 万上调到了 500 万,因为你刚提到还要覆盖两个孩子的海外学费。"
-- explain:不改白板时,指向对应模块解释客户的疑问。
-让客户听着 narration,就能明白屏幕上刚刚长出来/变化的那部分是什么、为什么。
+"""
+    + _NARRATION_REQ
+    + "\n\n"
+    + _RULES
+    + "\n- 只输出 JSON,不要任何额外文字或 markdown 代码块。"
+)
 
-规则:
-- 客户提供新信息时,把它整理进最相关的 zone,zone_data 给出该 zone 合并后的完整 data;narration 必须解说这次改动。
-- 你能在上下文里看到该 zone 改动前的 data(zones_so_far),做 modify 时请据此对比出"改了什么"再说出来。
-- 客户没说够时,礼貌追问(next_question),不要瞎编客户的资产数字。
-- 始终用"一般性思路 (general guidance)"措辞,不给具体股票/基金代码,不预测市场涨跌。
-- 涉及具体产品配置时,在 coverage_plan 的 disclaimer 里写明"具体产品请咨询持牌经纪人"。
-- 语言:用 {language} 与客户交流(narration / next_question / 文案均用该语言)。
-- 只输出 JSON,不要任何额外文字或 markdown 代码块。"""
+# 流式:先输出 narration 纯文本,再输出分隔符,再输出 JSON(不含 narration)
+STREAM_SYSTEM_PROMPT = (
+    _PROMPT_HEADER
+    + """
+输出格式(严格遵守,便于实时呈现):
+1) 先直接输出 narration 纯文本(口语、自然、简短,2-4 句),不要加引号或字段名。
+2) 另起一行输出分隔符:""" + PLAN_SENTINEL + """
+3) 分隔符之后输出结构化 JSON(不含 narration 字段):
+{{
+  "intent": "provide_info" | "modify_request" | "clarification_question" | "topic_switch" | "out_of_scope" | "terminate",
+  "action": "update_zone" | "modify_zone" | "explain" | "switch_focus" | "ask_next" | "finalize",
+  "target_zone": zone 的 id 或 null,
+  "zone_data": update_zone/modify_zone 时给出 target_zone 的完整新 data(匹配 schema),否则 null,
+  "next_question": 主动追问或 null
+}}
+
+"""
+    + _NARRATION_REQ
+    + "\n\n"
+    + _RULES
+    + "\n- 严格按上述三段格式输出:narration 文本、分隔符、JSON。JSON 之后不要再有其它内容。"
+)
 
 
 def _infer_jurisdiction(session: Session, utterance: str) -> str:
@@ -113,9 +150,12 @@ def _zone_schemas_text(template_id: str) -> str:
     return "\n".join(parts)
 
 
-def _build_messages(session: Session, utterance: str, repair_hint: Optional[str] = None) -> list[dict]:
+def _build_messages(
+    session: Session, utterance: str, repair_hint: Optional[str] = None, stream: bool = False
+) -> list[dict]:
     lang = "中文" if session.language == Language.zh else "English"
-    system = SYSTEM_PROMPT.format(zone_schemas=_zone_schemas_text(session.template_id), language=lang)
+    prompt = STREAM_SYSTEM_PROMPT if stream else SYSTEM_PROMPT
+    system = prompt.format(zone_schemas=_zone_schemas_text(session.template_id), language=lang)
 
     zones_state = {zid: z.data for zid, z in session.zones.items() if z.data}
     context = {
@@ -129,9 +169,10 @@ def _build_messages(session: Session, utterance: str, repair_hint: Optional[str]
     kb = rag.context_block(utterance, jurisdiction)
     kb_section = f"\n\n{kb}\n" if kb else ""
 
+    tail = "\n请先输出 narration,再输出分隔符与 JSON。" if stream else "\n请输出本轮的 JSON。"
     user_content = (
         f"当前白板状态:\n{json.dumps(context, ensure_ascii=False)}\n\n"
-        f"客户最新说的话:「{utterance}」{kb_section}\n请输出本轮的 JSON。"
+        f"客户最新说的话:「{utterance}」{kb_section}{tail}"
     )
     if repair_hint:
         user_content += f"\n\n注意:上一次输出的 zone_data 未通过 schema 校验,错误:{repair_hint}。请修正后重新输出完整 JSON。"
@@ -203,6 +244,140 @@ async def generate_turn(
     if cache_key:
         _cache_put(cache_key, raw)
     return _parse_turn(raw)
+
+
+# ---- 流式 ----
+
+_stream_cache: dict[str, tuple[float, str]] = {}
+
+
+def _parse_combined(full_text: str, fallback_narration: str = "") -> TurnPlan:
+    """解析 '<narration>===PLAN===<json>' 形式的流式输出。"""
+    if PLAN_SENTINEL in full_text:
+        narration_part, json_part = full_text.split(PLAN_SENTINEL, 1)
+    else:
+        # 没给分隔符:尽量从文本里抠出 JSON
+        narration_part, json_part = full_text, full_text
+    narration = narration_part.strip() or fallback_narration
+    text = json_part.strip()
+    start, end = text.find("{"), text.rfind("}")
+    if start == -1 or end == -1:
+        # 没有可解析 JSON:退化为纯解释
+        return TurnPlan(
+            intent=IntentType.clarification_question,
+            action=ActionType.explain,
+            target_zone=None,
+            narration=narration,
+        )
+    obj = json.loads(text[start : end + 1])
+    obj.setdefault("narration", narration)
+    obj["narration"] = narration
+    return TurnPlan.model_validate(obj)
+
+
+async def _call_qianfan_stream(messages: list[dict], model: str):
+    """异步生成器:yield ('delta', text) / ('usage', dict)。"""
+    url = f"{settings.qianfan_base_url}/chat/completions"
+    headers = {"Authorization": f"Bearer {settings.qianfan_api_key}"}
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": 0.4,
+        "stream": True,
+        "stream_options": {"include_usage": True},
+    }
+    timeout = httpx.Timeout(connect=10, read=120, write=30, pool=10)
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        async with client.stream("POST", url, headers=headers, json=payload) as resp:
+            resp.raise_for_status()
+            async for line in resp.aiter_lines():
+                if not line or not line.startswith("data:"):
+                    continue
+                data = line[5:].strip()
+                if data == "[DONE]":
+                    break
+                try:
+                    obj = json.loads(data)
+                except json.JSONDecodeError:
+                    continue
+                choices = obj.get("choices") or []
+                if choices:
+                    delta = (choices[0].get("delta") or {}).get("content")
+                    if delta:
+                        yield ("delta", delta)
+                if obj.get("usage"):
+                    yield ("usage", obj["usage"])
+
+
+async def generate_turn_stream(session: Session, utterance: str, kind: TaskKind = TaskKind.turn):
+    """异步生成器:先 yield ('narration', delta) 多次,最后 yield ('plan', TurnPlan)。"""
+    if not settings.has_llm:
+        plan = _mock_turn(session, utterance)
+        # mock:把 narration 分两段"流式"出去
+        mid = max(1, len(plan.narration) // 2)
+        yield ("narration", plan.narration[:mid])
+        yield ("narration", plan.narration[mid:])
+        yield ("plan", plan)
+        return
+
+    cost.check_budget(session.llm_cost)
+    cache_key = _cache_key(session, utterance)
+    cached = _cache_get_stream(cache_key)
+    if cached:
+        narration = cached.split(PLAN_SENTINEL, 1)[0].strip()
+        yield ("narration", narration)
+        yield ("plan", _parse_combined(cached))
+        return
+
+    messages = _build_messages(session, utterance, stream=True)
+    model = _model_for(kind)
+
+    # 增量切分 narration / json,边收边吐 narration
+    buffer = ""
+    emitted = 0
+    sentinel_found = False
+    usage: dict = {}
+    sn = len(PLAN_SENTINEL)
+
+    async for typ, payload in _call_qianfan_stream(messages, model):
+        if typ == "usage":
+            usage = payload
+            continue
+        buffer += payload
+        if not sentinel_found:
+            idx = buffer.find(PLAN_SENTINEL)
+            if idx != -1:
+                if idx > emitted:
+                    yield ("narration", buffer[emitted:idx])
+                sentinel_found = True
+            else:
+                safe = max(0, len(buffer) - (sn - 1))
+                if safe > emitted:
+                    yield ("narration", buffer[emitted:safe])
+                    emitted = safe
+
+    session.llm_cost += cost.estimate(
+        model, usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0)
+    )
+    _cache_put_stream(cache_key, buffer)
+    yield ("plan", _parse_combined(buffer))
+
+
+def _cache_get_stream(key: str) -> Optional[str]:
+    hit = _stream_cache.get(key)
+    if not hit:
+        return None
+    ts, content = hit
+    if time.time() - ts > _CACHE_TTL:
+        _stream_cache.pop(key, None)
+        return None
+    return content
+
+
+def _cache_put_stream(key: str, content: str) -> None:
+    if len(_stream_cache) > 500:
+        _stream_cache.clear()
+    _stream_cache[key] = (time.time(), content)
 
 
 # ---- Mock 模式:无 key 时跑通流程 ----

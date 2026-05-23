@@ -11,24 +11,26 @@ router = APIRouter()
 
 
 async def _run_turn(ws: WebSocket, session, text: str) -> None:
-    """处理一句用户输入:对话编排 → 推送事件 → 对 narration 合成 TTS。"""
+    """处理一句用户输入:流式编排 → 边收边推 → 对最终 narration 合成 TTS。"""
     await ws.send_json({"type": "thinking", "hint": "正在分析你的需求并作画…"})
+    final_narration = None
     try:
-        events = await dialogue.handle_utterance(session, text)
+        async for ev in dialogue.handle_utterance_stream(session, text):
+            await ws.send_json(ev)
+            if ev.get("type") in ("ai_message", "finalize", "free_chat") and ev.get("narration"):
+                final_narration = ev["narration"]
     except Exception as e:  # noqa: BLE001
         logger.exception("turn failed")
         await ws.send_json({"type": "error", "message": f"处理出错: {e}"})
         return
-    for ev in events:
-        await ws.send_json(ev)
-        narration = ev.get("narration") if isinstance(ev, dict) else None
-        if ev.get("type") in ("ai_message", "finalize", "free_chat") and narration:
-            audio = await speech.synthesize(
-                narration, session.language, speech.voice_for_persona(session.voice_persona)
-            )
-            if audio:
-                await ws.send_json({"type": "tts_audio", "format": "mp3", "audio": audio})
     session_store.save(session)
+    # 解说全部生成后,对最终(已合规处理的)narration 合成一次 TTS
+    if final_narration:
+        audio = await speech.synthesize(
+            final_narration, session.language, speech.voice_for_persona(session.voice_persona)
+        )
+        if audio:
+            await ws.send_json({"type": "tts_audio", "format": "mp3", "audio": audio})
 
 
 async def _send_started(ws: WebSocket, session) -> None:

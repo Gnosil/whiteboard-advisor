@@ -26,3 +26,15 @@ class FakeLLM:
             raise AssertionError("FakeLLM 预置的 TurnPlan 已用尽")
         self._last = self._plans.pop(0)
         return self._last
+
+    async def generate_turn_stream(self, session: Session, utterance: str, kind=None):
+        self.calls.append({"utterance": utterance, "stream": True, "session_id": session.id})
+        if not self._plans:
+            raise AssertionError("FakeLLM 预置的 TurnPlan 已用尽")
+        plan = self._plans.pop(0)
+        self._last = plan
+        n = plan.narration
+        mid = max(1, len(n) // 2)
+        yield ("narration", n[:mid])
+        yield ("narration", n[mid:])
+        yield ("plan", plan)
