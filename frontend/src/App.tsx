@@ -13,6 +13,7 @@ export default function App() {
   const [zoneMeta, setZoneMeta] = useState<ZoneMeta[]>([]);
   const [templates, setTemplates] = useState<TemplateMeta[]>([]);
   const [templateId, setTemplateId] = useState("family-protection");
+  const [layout, setLayout] = useState("grid");
   const [zones, setZones] = useState<Record<string, ZoneStateEntry>>({});
   const [focus, setFocus] = useState<string | null>(null);
   const [transcript, setTranscript] = useState<AiMessage[]>([]);
@@ -37,12 +38,14 @@ export default function App() {
         setZoneMeta(msg.zones as ZoneMeta[]);
         setTemplates((msg.templates as TemplateMeta[]) || []);
         setTemplateId(msg.templateId as string);
+        setLayout((msg.layout as string) || "grid");
         setSpeechEnabled(!!msg.speechEnabled);
         sessionIdRef.current = msg.sessionId as string;
         localStorage.setItem("wb_session", msg.sessionId as string);
         break;
       case "template_changed":
         setTemplateId(msg.templateId as string);
+        setLayout((msg.layout as string) || "grid");
         setZoneMeta(msg.zones as ZoneMeta[]);
         setZones({});
         setFinalized(false);
@@ -411,6 +414,7 @@ export default function App() {
               zones={zones}
               focus={focus}
               lang={lang}
+              layout={layout}
               onRefresh={(_id, title) => {
                 if (thinking) return;
                 send({ type: "user_utterance", text: `请更新「${title}」,上游信息有变化` });

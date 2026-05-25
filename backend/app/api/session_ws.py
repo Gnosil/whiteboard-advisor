@@ -64,6 +64,7 @@ async def _send_started(ws: WebSocket, session) -> None:
             "language": session.language.value,
             "templateId": session.template_id,
             "templates": registry.template_meta(),
+            "layout": registry.template_layout(session.template_id),
             "zones": zone_engine.zone_meta(session),
             "speechEnabled": speech.settings.has_speech,
         }
@@ -119,6 +120,7 @@ async def session_ws(ws: WebSocket) -> None:
                         {
                             "type": "template_changed",
                             "templateId": session.template_id,
+                            "layout": registry.template_layout(session.template_id),
                             "zones": zone_engine.zone_meta(session),
                         }
                     )

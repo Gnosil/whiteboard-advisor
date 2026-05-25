@@ -1,17 +1,23 @@
 import { AnimatePresence, motion } from "framer-motion";
 import type { Lang, ZoneMeta, ZoneStateEntry } from "../lib/types";
 import { ZONE_RENDERERS } from "../zones";
+import Timeline from "./Timeline";
 
 interface Props {
   meta: ZoneMeta[];
   zones: Record<string, ZoneStateEntry>;
   focus: string | null;
   lang: Lang;
+  layout?: string;
   onRefresh: (zoneId: string, title: string) => void;
 }
 
-export default function Whiteboard({ meta, zones, focus, lang, onRefresh }: Props) {
+export default function Whiteboard({ meta, zones, focus, lang, layout, onRefresh }: Props) {
   const ordered = [...meta].sort((a, b) => a.order - b.order);
+
+  if (layout === "timeline") {
+    return <Timeline meta={meta} zones={zones} focus={focus} lang={lang} onRefresh={onRefresh} />;
+  }
 
   return (
     <div

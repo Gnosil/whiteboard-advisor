@@ -26,6 +26,13 @@ def test_template_meta_lists_all():
     assert metas == {"family-protection", "retirement", "education", "comprehensive", "life-stage"}
 
 
+def test_layout_timeline_only_for_life_stage():
+    assert registry.template_layout("life-stage") == "timeline"
+    assert registry.template_layout("family-protection") == "grid"
+    assert registry.template_layout("comprehensive") == "grid"
+    assert registry.template_layout("unknown") == "grid"
+
+
 def test_life_stage_template_zones_ordered():
     ids = registry.template_zone_ids("life-stage")
     assert ids == ["family_profile", "life_stage_early", "life_stage_mid", "life_stage_retire"]

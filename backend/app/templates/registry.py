@@ -24,10 +24,16 @@ TEMPLATES: dict[str, dict] = {
     "life-stage": {
         "title": {"zh": "人生阶段规划", "en": "Life-Stage Planning"},
         "zone_ids": ["family_profile", "life_stage_early", "life_stage_mid", "life_stage_retire"],
+        "layout": "timeline",  # 时间轴布局
     },
 }
 
 DEFAULT_TEMPLATE = "family-protection"
+
+
+def template_layout(template_id: str) -> str:
+    tid = template_id if template_id in TEMPLATES else DEFAULT_TEMPLATE
+    return TEMPLATES[tid].get("layout", "grid")
 
 
 def exists(template_id: str) -> bool:
